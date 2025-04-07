@@ -1,10 +1,33 @@
 <script setup>
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+const navigateToAdmin = () => {
+  router.push('/admin') // Replace '/admin' with the actual admin route
+}
+
+const navigateToIntern = () => {
+  router.push('/intern') // Replace '/intern' with the actual intern route
+}
 </script>
 
 <template>
-  <main>
-    <h1>Welcome to the Home Page</h1>
-    <p>This is the main content of the home page.</p>
-    <router-link to="/about">Go to About Page</router-link>
-  </main>
+  <div class="flex flex-col items-center justify-center h-screen w-full text-center">
+    <h1 class="text-3xl font-bold mb-8">UP-CIDS-DSPP Internship Attendance</h1>
+    <div class="flex gap-4">
+      <button 
+        @click="navigateToAdmin" 
+        class="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+      >
+        Login as Admin
+      </button>
+      <button 
+        @click="navigateToIntern" 
+        class="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+      >
+        Login as Intern
+      </button>
+    </div>
+  </div>
 </template>
