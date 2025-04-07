@@ -4,11 +4,11 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 const navigateToAdmin = () => {
-  router.push('/admin') // Replace '/admin' with the actual admin route
+  router.push('/admin/login') // Replace '/admin' with the actual admin route
 }
 
 const navigateToIntern = () => {
-  router.push('/intern') // Replace '/intern' with the actual intern route
+  router.push('/intern/login') // Replace '/intern' with the actual intern route
 }
 </script>
 
