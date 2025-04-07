@@ -19,5 +19,5 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('internship', include('internship.urls')),
+    path('internship/', include('internship.urls')),  # Ensure the trailing slash is present
 ]

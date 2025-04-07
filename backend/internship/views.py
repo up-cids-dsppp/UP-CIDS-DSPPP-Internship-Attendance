@@ -22,11 +22,17 @@ def intern_login(request):
 def admin_login(request):
     email = request.data.get('email')
     password = request.data.get('password')
-    user = authenticate(username=email, password=password)
-    if user is not None and user.is_superuser:  # Ensure the user is an admin
-        refresh = RefreshToken.for_user(user)
-        return JsonResponse({
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-        })
+    try:
+        # Get the user by email
+        user = User.objects.get(email=email)
+        # Authenticate using the username field
+        user = authenticate(username=user.username, password=password)
+        if user is not None and user.is_superuser:  # Ensure the user is an admin
+            refresh = RefreshToken.for_user(user)
+            return JsonResponse({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            })
+    except User.DoesNotExist:
+        pass
     return JsonResponse({'message': 'Invalid admin credentials'}, status=401)
