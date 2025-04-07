@@ -1,22 +1,37 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
 
 const email = ref('')
 const password = ref('')
 const showPassword = ref(false)
 
+const authStore = useAuthStore()
+
+const handleLogin = async () => {
+  await authStore.intern_login(email.value, password.value)
+}
+
 const router = useRouter()
 
 const goBack = () => {
   router.back() // Navigates to the previous page
 }
+
+// Clear error message when the component is mounted
+onMounted(() => {
+  authStore.errorMessage = null
+})
 </script>
 
 <template>
   <div class="flex flex-col items-center justify-center h-screen w-full text-center">
     <h1 class="text-2xl font-bold mb-6">Intern Login</h1>
-    <form class="flex flex-col gap-4 w-80">
+    <p v-if="authStore.errorMessage" class="mt-4 text-red-500">
+      {{ authStore.errorMessage }}
+    </p>
+    <form @submit.prevent="handleLogin" class="flex flex-col gap-4 w-80">
       <div>
         <label for="email" class="block text-left font-medium mb-1">Email</label>
         <input 
@@ -47,7 +62,7 @@ const goBack = () => {
         </div>
       </div>
       <button 
-        type="button" 
+        type="submit" 
         class="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
       >
         Login
