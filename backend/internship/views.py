@@ -8,8 +8,10 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.hashers import make_password, check_password
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import permission_classes
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import Intern
 from datetime import timedelta
+from django.utils.dateformat import format
 
 @api_view(['POST'])
 def intern_login(request):
@@ -19,7 +21,7 @@ def intern_login(request):
         intern = Intern.objects.get(email=email)
         if check_password(password, intern.password):
             # Manually create a token payload
-            refresh = RefreshToken()
+            refresh = RefreshToken.for_user(intern)
             refresh['user_id'] = intern.id
             refresh['email'] = intern.email
             refresh['user_type'] = 'intern'
@@ -75,3 +77,59 @@ def manage_interns(request):
             time_to_render=timedelta(hours=hours),  # Convert hours to timedelta
         )
         return JsonResponse({'message': 'Intern added successfully', 'id': intern.id})
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def intern_profile(request):
+    try:
+        # Extract the email from the JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(request.headers.get('Authorization').split()[1])
+        email = validated_token.get('email')
+
+        # Retrieve the intern using the email
+        intern = Intern.objects.get(email=email)
+        return JsonResponse({
+            'email': intern.email,
+            'full_name': intern.full_name,
+        })
+    except Intern.DoesNotExist:
+        return JsonResponse({'message': 'Intern not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'message': str(e)}, status=400)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def attendance_logs(request):
+    try:
+        # Extract the email from the JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(request.headers.get('Authorization').split()[1])
+        email = validated_token.get('email')
+
+        # Retrieve the intern using the email
+        intern = Intern.objects.get(email=email)
+
+        # Retrieve and order attendance logs (most recent first)
+        logs = intern.attendance.order_by('-time_in').values(
+            'id', 
+            'time_in', 
+            'time_out'
+        )
+
+        # Format the logs for frontend consumption
+        formatted_logs = [
+            {
+                'id': log['id'],
+                'date': format(log['time_in'], 'Y-m-d'),
+                'time_in': format(log['time_in'], 'H:i:s'),
+                'time_out': format(log['time_out'], 'H:i:s') if log['time_out'] else None,
+            }
+            for log in logs
+        ]
+
+        return JsonResponse(formatted_logs, safe=False)
+    except Intern.DoesNotExist:
+        return JsonResponse({'message': 'Intern not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'message': str(e)}, status=400)

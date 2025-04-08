@@ -1,11 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import NavBar from '../components/NavBar.vue'
 
-const authStore = useAuthStore()
 const router = useRouter()
 const interns = ref([])
 const adminEmail = ref('') // Store the admin's email

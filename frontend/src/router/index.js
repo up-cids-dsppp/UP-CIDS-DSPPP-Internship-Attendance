@@ -7,6 +7,7 @@ import { useAuthStore } from '../stores/auth'
 import InternHomeView from '@/views/InternHomeView.vue'
 import AddInternView from '@/views/AddInternView.vue'
 import UnauthenticatedView from '@/views/UnauthenticatedView.vue'
+import TimeInView from '@/views/TimeInView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -30,6 +31,11 @@ const router = createRouter({
       path: '/intern/home',
       name: 'intern_home',
       component: InternHomeView, // Lazy-loaded
+    },
+    {
+      path: '/intern/in',
+      name: 'intern_in',
+      component: TimeInView,
     },
     {
       path: '/admin/login',
