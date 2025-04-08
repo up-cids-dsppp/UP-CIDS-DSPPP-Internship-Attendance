@@ -5,6 +5,11 @@ from rest_framework.decorators import api_view
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.hashers import make_password
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import permission_classes
+from .models import Intern
+from datetime import timedelta
 
 @api_view(['POST'])
 def intern_login(request):
@@ -39,14 +44,27 @@ def admin_login(request):
     return JsonResponse({'message': 'Invalid admin credentials'}, status=401)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def admin_profile(request):
     if request.user.is_authenticated and request.user.is_superuser:
         return JsonResponse({'email': request.user.email})
     return JsonResponse({'message': 'Unauthorized'}, status=401)
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 @user_passes_test(lambda u: u.is_superuser)  # Ensure only admins can access
-def get_interns(request):
-    interns = User.objects.filter(is_superuser=False).values('id', 'first_name', 'last_name', 'email')
-    interns_list = [{'id': intern['id'], 'full_name': f"{intern['first_name']} {intern['last_name']}", 'email': intern['email']} for intern in interns]
-    return JsonResponse(interns_list, safe=False)
+def manage_interns(request):
+    if request.method == 'GET':
+        interns = Intern.objects.all().values('id', 'full_name', 'email', 'start_date', 'time_to_render')
+        return JsonResponse(list(interns), safe=False)
+    elif request.method == 'POST':
+        data = request.data
+        hours = int(data['time_to_render'])  # Convert hours to an integer
+        intern = Intern.objects.create(
+            full_name=data['full_name'],
+            email=data['email'],
+            password=make_password(data['password']),  # Hash the password
+            start_date=data['start_date'],
+            time_to_render=timedelta(hours=hours),  # Convert hours to timedelta
+        )
+        return JsonResponse({'message': 'Intern added successfully', 'id': intern.id})
