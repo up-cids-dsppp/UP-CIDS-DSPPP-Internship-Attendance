@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import user_passes_test
 
 @api_view(['POST'])
 def intern_login(request):
@@ -36,3 +37,16 @@ def admin_login(request):
     except User.DoesNotExist:
         pass
     return JsonResponse({'message': 'Invalid admin credentials'}, status=401)
+
+@api_view(['GET'])
+def admin_profile(request):
+    if request.user.is_authenticated and request.user.is_superuser:
+        return JsonResponse({'email': request.user.email})
+    return JsonResponse({'message': 'Unauthorized'}, status=401)
+
+@api_view(['GET'])
+@user_passes_test(lambda u: u.is_superuser)  # Ensure only admins can access
+def get_interns(request):
+    interns = User.objects.filter(is_superuser=False).values('id', 'first_name', 'last_name', 'email')
+    interns_list = [{'id': intern['id'], 'full_name': f"{intern['first_name']} {intern['last_name']}", 'email': intern['email']} for intern in interns]
+    return JsonResponse(interns_list, safe=False)

@@ -38,8 +38,8 @@ export const useAuthStore = defineStore('auth', () => {
   const logout = () => {
     accessToken.value = null
     refreshToken.value = null
-    delete axios.defaults.headers.common['Authorization']
-    router.push('/intern/login') // Redirect to login page
+    axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken.value}`
+    router.push('/') // Redirect to landing page
   }
 
   return {
