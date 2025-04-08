@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { useAuthStore } from '../stores/auth' // Import the auth store
 import NavBar from '../components/NavBar.vue'
 
 // Helper function to get today's date in YYYY-MM-DD format
@@ -14,6 +15,7 @@ const getCurrentDate = () => {
 }
 
 const router = useRouter()
+const authStore = useAuthStore() // Access the auth store
 
 // Form fields for the intern
 const fullName = ref('')
@@ -51,9 +53,15 @@ const handleSubmit = async () => {
   }
 }
 
-// Navigate back to the admin home page
+// Navigate back to the appropriate page based on user type
 const goBack = () => {
-  router.push('/admin/home')
+  if (authStore.userType === 'admin') {
+    router.push('/admin/home') // Redirect to admin home page
+  } else if (authStore.userType === 'intern') {
+    router.push('/intern/home') // Redirect to intern home page
+  } else {
+    router.push('/') // Fallback to the landing page
+  }
 }
 </script>
 

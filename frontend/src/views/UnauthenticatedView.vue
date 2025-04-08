@@ -8,7 +8,7 @@
       to="/" 
       class="text-blue-500 underline hover:text-blue-700 text-lg"
     >
-      Go back to the landing page
+      Go back
     </router-link>
   </div>
 </template>

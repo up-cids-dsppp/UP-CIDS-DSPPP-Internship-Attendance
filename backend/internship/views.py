@@ -5,7 +5,7 @@ from rest_framework.decorators import api_view
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import user_passes_test
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import make_password, check_password
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import permission_classes
 from .models import Intern
@@ -15,13 +15,20 @@ from datetime import timedelta
 def intern_login(request):
     email = request.data.get('email')
     password = request.data.get('password')
-    user = authenticate(username=email, password=password)
-    if user is not None:
-        refresh = RefreshToken.for_user(user)
-        return JsonResponse({
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-        })
+    try:
+        intern = Intern.objects.get(email=email)
+        if check_password(password, intern.password):
+            # Manually create a token payload
+            refresh = RefreshToken()
+            refresh['user_id'] = intern.id
+            refresh['email'] = intern.email
+            refresh['user_type'] = 'intern'
+            return JsonResponse({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            })
+    except Intern.DoesNotExist:
+        pass
     return JsonResponse({'message': 'Invalid email or password'}, status=401)
 
 @api_view(['POST'])
