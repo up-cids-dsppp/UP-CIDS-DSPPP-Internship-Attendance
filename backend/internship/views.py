@@ -72,7 +72,7 @@ def manage_interns(request):
         intern = Intern.objects.create(
             full_name=data['full_name'],
             email=data['email'],
-            password=make_password(data['password']),  # Hash the password
+            password=data['password'],  # Hash the password
             start_date=data['start_date'],
             time_to_render=timedelta(hours=hours),  # Convert hours to timedelta
         )
