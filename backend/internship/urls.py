@@ -14,4 +14,6 @@ urlpatterns = [
     path('admin/interns', views.manage_interns, name='manage_interns'),
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('intern/attendance/f2f', views.log_face_to_face_attendance, name='log_face_to_face_attendance'),
+    path('intern/attendance/async', views.log_asynchronous_attendance, name='log_asynchronous_attendance'),
 ]

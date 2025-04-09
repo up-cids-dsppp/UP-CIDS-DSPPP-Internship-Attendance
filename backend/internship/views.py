@@ -10,10 +10,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import permission_classes
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from .models import Intern
+from .models import Intern, Attendance, Task  # Assuming these models exist
 from .auth import InternJWTAuthentication
 from datetime import timedelta
 from django.utils.dateformat import format
+from django.utils.timezone import now
 
 
 @api_view(['POST'])
@@ -131,5 +132,55 @@ def attendance_logs(request):
         return JsonResponse(formatted_logs, safe=False)
     except Intern.DoesNotExist:
         return JsonResponse({'message': 'Intern not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'message': str(e)}, status=400)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def log_face_to_face_attendance(request):
+    try:
+        intern = request.user  # Assuming the user is authenticated as an intern
+        face_screenshot = request.data.get('faceScreenshot')
+        remarks = request.data.get('remarks', 'present')
+
+        if not face_screenshot:
+            return JsonResponse({'message': 'Face screenshot is required.'}, status=400)
+
+        # Save the attendance record
+        Attendance.objects.create(
+            intern=intern,
+            type='f2f',
+            remarks=remarks,
+            face_screenshot=face_screenshot,
+            time_in=now()
+        )
+
+        return JsonResponse({'message': 'Face-to-Face attendance logged successfully.'})
+    except Exception as e:
+        return JsonResponse({'message': str(e)}, status=400)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def log_asynchronous_attendance(request):
+    try:
+        intern = request.user  # Assuming the user is authenticated as an intern
+        tasks_data = request.data.get('tasks', [])
+
+        if not tasks_data or not all(task.get('description', '').strip() for task in tasks_data):
+            return JsonResponse({'message': 'All task descriptions must be filled out.'}, status=400)
+
+        # Create the attendance record
+        attendance = Attendance.objects.create(
+            intern=intern,
+            type='async',
+            time_in=now()
+        )
+
+        # Create and link tasks to the attendance
+        for task_data in tasks_data:
+            task = Task.objects.create(description=task_data['description'])
+            attendance.tasks.add(task)  # Link the task to the attendance
+
+        return JsonResponse({'message': 'Asynchronous attendance logged successfully.'})
     except Exception as e:
         return JsonResponse({'message': str(e)}, status=400)
