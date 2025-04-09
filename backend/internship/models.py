@@ -9,6 +9,11 @@ class Intern(models.Model):
     time_to_render = models.DurationField()  # Represents the total time to render (e.g., internship duration)
     time_rendered = models.DurationField(default="0:00:00")  # Tracks time already rendered
 
+    @property
+    def is_authenticated(self):
+        # This property is required for Django's authentication system
+        return True
+
     def save(self, *args, **kwargs):
         # Ensure the password is hashed before saving
         if not self.password.startswith('pbkdf2_'):  # Avoid re-hashing an already hashed password

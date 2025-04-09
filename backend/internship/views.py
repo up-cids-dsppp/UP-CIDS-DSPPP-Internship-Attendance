@@ -1,17 +1,20 @@
 from django.shortcuts import render
 from django.contrib.auth import authenticate
 from django.http import JsonResponse
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, authentication_classes
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.hashers import make_password, check_password
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import permission_classes
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import Intern
+from .auth import InternJWTAuthentication
 from datetime import timedelta
 from django.utils.dateformat import format
+
 
 @api_view(['POST'])
 def intern_login(request):
@@ -80,6 +83,7 @@ def manage_interns(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+@authentication_classes([InternJWTAuthentication, SessionAuthentication])
 def intern_profile(request):
     try:
         # Extract the email from the JWT token
@@ -100,15 +104,11 @@ def intern_profile(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+@authentication_classes([InternJWTAuthentication, SessionAuthentication])
 def attendance_logs(request):
     try:
-        # Extract the email from the JWT token
-        jwt_auth = JWTAuthentication()
-        validated_token = jwt_auth.get_validated_token(request.headers.get('Authorization').split()[1])
-        email = validated_token.get('email')
-
-        # Retrieve the intern using the email
-        intern = Intern.objects.get(email=email)
+        # Retrieve the authenticated intern
+        intern = request.user
 
         # Retrieve and order attendance logs (most recent first)
         logs = intern.attendance.order_by('-time_in').values(
