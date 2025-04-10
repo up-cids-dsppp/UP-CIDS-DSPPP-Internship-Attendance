@@ -3,10 +3,10 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import NavBar from '../components/NavBar.vue'
-import { isTimedIn, tasksForTheDay, timeIn, timeOut, setTasksForTheDay } from '../stores/timeInOut'
-
+import { useTimeInOutStore } from '../stores/timeInOut'
 
 const router = useRouter()
+const timeInOutStore = useTimeInOutStore() // Use the Pinia store
 
 // Intern details
 const internEmail = ref('') // Intern email
@@ -18,6 +18,7 @@ const currentTime = ref(new Date().toLocaleTimeString())
 
 // Attendance logs
 const attendanceLogs = ref([]) // Array to store attendance logs
+const mostRecentAttendance = ref(null) // Tracks the most recent attendance log
 
 // Update the clock every second
 const updateClock = () => {
@@ -36,6 +37,14 @@ onMounted(async () => {
     // Fetch attendance logs
     const logsResponse = await axios.get('/intern/attendance') // Replace with the correct endpoint
     attendanceLogs.value = logsResponse.data // Assume the API returns an array of logs
+
+    // Determine the most recent attendance
+    if (attendanceLogs.value.length > 0) {
+      mostRecentAttendance.value = attendanceLogs.value[0] // Most recent log is the first in the list
+      timeInOutStore.setTimedIn(mostRecentAttendance.value.status === 'ongoing') // Update the store
+      timeInOutStore.setTasksForTheDay(mostRecentAttendance.value.tasks?.length || 0) // Update the store
+    }
+    console.log('timedIn', timeInOutStore.isTimedIn)
   } catch (error) {
     console.error('Failed to fetch data:', error)
   }
@@ -43,15 +52,12 @@ onMounted(async () => {
 
 // Handle "Time In" button click
 const handleTimeIn = async () => {
-  timeIn()
   router.push('/intern/in') // Redirect to the time-in page
 }
 
 // Handle "Time Out" button click
 const handleTimeOut = () => {
-  timeOut()
   router.push('/intern/out') // Redirect to the time-out page
-
 }
 
 // Handle "View" link click
@@ -73,17 +79,17 @@ const viewAttendanceLog = (logId) => {
       <div
         :class="[
           'text-white p-4 mt-4 rounded-lg max-w-md',
-          isTimedIn ? 'bg-red-500' : 'bg-green-500'
+          timeInOutStore.isTimedIn ? 'bg-red-500' : 'bg-green-500'
         ]"
       >
         <p class="text-lg font-semibold">Today's Date: {{ currentDate }}</p>
         <p class="text-lg font-semibold">Current Time: {{ currentTime }}</p>
-        <p v-if="isTimedIn" class="text-lg font-semibold mt-2">
-          Tasks to accomplish: {{ tasksForTheDay }}
+        <p v-if="timeInOutStore.isTimedIn" class="text-lg font-semibold mt-2">
+          Tasks to accomplish: {{ timeInOutStore.tasksForTheDay }}
         </p>
         <div class="flex justify-end mt-4">
           <button
-            v-if="!isTimedIn"
+            v-if="!timeInOutStore.isTimedIn"
             @click="handleTimeIn"
             class="bg-white text-green-500 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
           >
@@ -108,16 +114,26 @@ const viewAttendanceLog = (logId) => {
         <thead>
           <tr class="bg-gray-200">
             <th class="border border-gray-300 px-4 py-2">Date</th>
-            <th class="border border-gray-300 px-4 py-2">Type</th> <!-- Add Type Column -->
+            <th class="border border-gray-300 px-4 py-2">Type</th>
             <th class="border border-gray-300 px-4 py-2">Time In</th>
             <th class="border border-gray-300 px-4 py-2">Time Out</th>
             <th class="border border-gray-300 px-4 py-2">Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="log in attendanceLogs" :key="log.id" class="text-center">
+          <tr
+            v-for="log in attendanceLogs"
+            :key="log.id"
+            :class="{
+              'bg-green-100': log.status === 'validated',
+              'bg-red-100': log.status === 'flagged',
+              'bg-orange-100': log.status === 'sent',
+              '': log.status === 'ongoing',
+            }"
+            class="text-center"
+          >
             <td class="border border-gray-300 px-4 py-2">{{ log.date }}</td>
-            <td class="border border-gray-300 px-4 py-2">{{ log.type }}</td> <!-- Display Type -->
+            <td class="border border-gray-300 px-4 py-2">{{ log.type }}</td>
             <td class="border border-gray-300 px-4 py-2">{{ log.time_in }}</td>
             <td class="border border-gray-300 px-4 py-2">{{ log.time_out || 'N/A' }}</td>
             <td class="border border-gray-300 px-4 py-2">

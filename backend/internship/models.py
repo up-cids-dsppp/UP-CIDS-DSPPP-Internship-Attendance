@@ -35,6 +35,7 @@ class Attendance(models.Model):
         ('ongoing', 'Ongoing'),
         ('validated', 'Validated'),
         ('flagged', 'Flagged'),
+        ('sent', 'Sent'),
     ]
 
     intern = models.ForeignKey(Intern, on_delete=models.CASCADE, related_name="attendance", null=True)  # Connect to Intern table

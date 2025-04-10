@@ -10,6 +10,7 @@ import UnauthenticatedView from '@/views/UnauthenticatedView.vue'
 import InternAttendanceView from '@/views/InternAttendanceView.vue'
 import TimeInView from '@/views/TimeInView.vue'
 import TimeOutView from '@/views/TimeOutView.vue'
+import { useTimeInOutStore } from '../stores/timeInOut'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -75,6 +76,9 @@ const router = createRouter({
 // Add a global navigation guard
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
+  const timeInOutStore = useTimeInOutStore() // Access the Pinia store
+
+  console.log('timed in', timeInOutStore.isTimedIn)
 
   // Check if the user is logged in
   if (authStore.accessToken) {
@@ -85,6 +89,14 @@ router.beforeEach((to, from, next) => {
       } else if (authStore.userType === 'intern') {
         return next('/intern/home')
       }
+    }
+
+    // Restrict access to /intern/in and /intern/out based on isTimedIn state
+    if (to.path === '/intern/in' && timeInOutStore.isTimedIn) {
+      return next('/intern/home') // Redirect to intern home if already timed in
+    }
+    if (to.path === '/intern/out' && !timeInOutStore.isTimedIn) {
+      return next('/intern/home') // Redirect to intern home if not timed in
     }
 
     // Allow access to admin-only routes for admins

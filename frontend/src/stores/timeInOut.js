@@ -1,16 +1,33 @@
-import { ref } from 'vue'
+import { defineStore } from 'pinia'
+import { ref, watch } from 'vue'
 
-export const isTimedIn = ref(false) // Tracks if the intern is timed in
-export const tasksForTheDay = ref(0) // Tracks the number of tasks for the day
+export const useTimeInOutStore = defineStore('timeInOut', () => {
+  // Load initial state from localStorage
+  const isTimedIn = ref(JSON.parse(localStorage.getItem('isTimedIn')) || false) // Tracks if the intern is timed in
+  const tasksForTheDay = ref(JSON.parse(localStorage.getItem('tasksForTheDay')) || 0) // Tracks the number of tasks for the day
 
-export const timeIn = () => {
-  isTimedIn.value = true
-}
+  // Actions to update the state
+  function setTimedIn(status) {
+    isTimedIn.value = status
+  }
 
-export const timeOut = () => {
-  isTimedIn.value = false
-}
+  function setTasksForTheDay(count) {
+    tasksForTheDay.value = count
+  }
 
-export const setTasksForTheDay = (tasks) => {
-  tasksForTheDay.value = tasks
-}
+  // Persist state to localStorage whenever it changes
+  watch(isTimedIn, (newValue) => {
+    localStorage.setItem('isTimedIn', JSON.stringify(newValue))
+  })
+
+  watch(tasksForTheDay, (newValue) => {
+    localStorage.setItem('tasksForTheDay', JSON.stringify(newValue))
+  })
+
+  return {
+    isTimedIn,
+    tasksForTheDay,
+    setTimedIn,
+    setTasksForTheDay,
+  }
+})

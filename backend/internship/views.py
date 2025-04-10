@@ -121,7 +121,8 @@ def attendance_logs(request):
             'id', 
             'type',  # Include the type field
             'time_in', 
-            'time_out'
+            'time_out',
+            'status'  # Include the status field
         )
 
         # Format the logs for frontend consumption
@@ -132,6 +133,7 @@ def attendance_logs(request):
                 'date': format(log['time_in'], 'Y-m-d'),
                 'time_in': format(log['time_in'], 'H:i:s'),
                 'time_out': format(log['time_out'], 'H:i:s') if log['time_out'] else None,
+                'status': log['status'],  # Add status to the response
             }
             for log in logs
         ]
