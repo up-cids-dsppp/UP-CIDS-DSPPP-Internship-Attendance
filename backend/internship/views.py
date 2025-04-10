@@ -215,3 +215,47 @@ def log_asynchronous_attendance(request):
         return JsonResponse({'message': 'Asynchronous attendance logged successfully.'})
     except Exception as e:
         return JsonResponse({'message': str(e)}, status=400)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([InternJWTAuthentication, SessionAuthentication])
+def attendance_log_details(request, log_id):
+    try:
+        # Extract the email from the JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(request.headers.get('Authorization').split()[1])
+        email = validated_token.get('email')
+
+        # Retrieve the intern using the email
+        intern = Intern.objects.get(email=email)
+
+        # Retrieve the specific attendance log
+        attendance = Attendance.objects.get(id=log_id, intern=intern)
+
+        # Retrieve associated tasks
+        tasks = attendance.tasks.all()
+        tasks_data = []
+        for task in tasks:
+            images = task.images.all().values('id', 'file')
+            tasks_data.append({
+                'id': task.id,
+                'description': task.description,
+                'remarks': task.remarks,
+                'images': list(images),
+            })
+
+        # Format the response
+        response_data = {
+            'id': attendance.id,
+            'type': attendance.type,
+            'date': format(attendance.time_in, 'Y-m-d'),
+            'time_in': format(attendance.time_in, 'H:i:s'),
+            'time_out': format(attendance.time_out, 'H:i:s') if attendance.time_out else None,
+            'tasks': tasks_data,
+        }
+
+        return JsonResponse(response_data)
+    except Attendance.DoesNotExist:
+        return JsonResponse({'message': 'Attendance log not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'message': str(e)}, status=400)
