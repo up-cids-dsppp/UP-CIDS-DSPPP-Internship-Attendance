@@ -121,6 +121,7 @@ const submitForm = async () => {
     }
 
     alert('Attendance logged successfully!')
+    router.push('/intern/home') // Redirect to home page
   } catch (error) {
     console.error('Error submitting attendance:', error)
     alert('Failed to log attendance.')
