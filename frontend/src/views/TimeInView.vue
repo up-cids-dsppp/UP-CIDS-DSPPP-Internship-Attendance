@@ -2,38 +2,77 @@
 import { ref, reactive, onMounted } from 'vue'
 import axios from 'axios'
 import NavBar from '../components/NavBar.vue'
+import {useRouter} from 'vue-router'
 
 const attendanceType = ref(null) // Dropdown value
 const faceScreenshot = ref(null) // Captured face screenshot
 const numberOfTasks = ref(1) // Number of tasks for asynchronous
 const tasks = reactive([]) // Task descriptions
 const internEmail = ref('') // Intern email
+const selectedCamera = ref(null) // Selected camera ID
+const cameras = ref([]) // List of available cameras
+const showModal = ref(false) // Modal visibility
+const videoStream = ref(null) // Video stream for the camera
 
 // Initialize tasks array with one empty task
 tasks.push({ description: '' })
 
-// Handle webcam capture
-const captureFace = async () => {
-  const video = document.createElement('video')
+const router = useRouter()
+
+const goBack = () => {
+  router.back() // Navigates to the previous page
+}
+
+const fetchCameras = async () => {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const videoInputDevices = devices.filter(device => device.kind === 'videoinput');
+    cameras.value = videoInputDevices; // <-- This stores the list of cameras
+    console.log('Connected Cameras:', videoInputDevices);
+  } catch (error) {
+    console.error('Error fetching cameras:', error);
+  }
+};
+
+fetchCameras();
+
+// Open the modal and start the camera
+const openCameraModal = async () => {
+  if (!selectedCamera.value) {
+    alert('No camera selected.')
+    return
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { deviceId: { exact: selectedCamera.value } },
+    })
+    videoStream.value = stream
+    showModal.value = true
+  } catch (error) {
+    console.error('Error accessing camera:', error)
+  }
+}
+
+// Close the modal and stop the camera
+const closeCameraModal = () => {
+  if (videoStream.value) {
+    videoStream.value.getTracks().forEach((track) => track.stop())
+    videoStream.value = null
+  }
+  showModal.value = false
+}
+
+// Capture the image from the camera
+const captureImage = () => {
+  const video = document.querySelector('#cameraPreview')
   const canvas = document.createElement('canvas')
   const context = canvas.getContext('2d')
 
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true })
-    video.srcObject = stream
-    await video.play()
-
-    // Capture the frame
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
-    context.drawImage(video, 0, 0, canvas.width, canvas.height)
-    faceScreenshot.value = canvas.toDataURL('image/png')
-
-    // Stop the webcam
-    stream.getTracks().forEach((track) => track.stop())
-  } catch (error) {
-    console.error('Error accessing webcam:', error)
-  }
+  canvas.width = video.videoWidth
+  canvas.height = video.videoHeight
+  context.drawImage(video, 0, 0, canvas.width, canvas.height)
+  faceScreenshot.value = canvas.toDataURL('image/png') // Save the captured image
+  closeCameraModal() // Close the modal
 }
 
 // Handle form submission
@@ -106,6 +145,7 @@ onMounted(async () => {
   } catch (error) {
     console.error('Failed to fetch data:', error)
   }
+  fetchCameras()
 })
 </script>
 
@@ -113,6 +153,12 @@ onMounted(async () => {
   <!-- Navbar Component -->
   <NavBar userType="intern" :userEmail="internEmail" />
   <div class="p-6">
+    <p 
+      @click="goBack" 
+      class="mb-4 text-gray-500 underline cursor-pointer hover:text-gray-700"
+    >
+      Go back
+    </p>
     <h1 class="text-2xl font-bold mb-4">Time In</h1>
 
     <!-- Attendance Type Dropdown -->
@@ -129,15 +175,52 @@ onMounted(async () => {
 
     <!-- Face-to-Face Section -->
     <div v-if="attendanceType === 'Face-to-Face'" class="mb-4">
+      <label for="cameraSelect" class="block mb-2">Select Camera:</label>
+      <select
+        id="cameraSelect"
+        v-model="selectedCamera"
+        class="border rounded px-4 py-2 mb-4 w-full"
+      >
+        <option v-for="camera in cameras" :key="camera.deviceId" :value="camera.deviceId">
+          {{ camera.label || `Camera ${camera.deviceId}` }}
+        </option>
+      </select>
+
       <button
-        @click="captureFace"
+        @click="openCameraModal"
         class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
       >
         Take Face Screenshot
       </button>
+
       <div v-if="faceScreenshot" class="mt-4">
         <h2 class="font-bold">Captured Image:</h2>
         <img :src="faceScreenshot" alt="Face Screenshot" class="mt-2 border rounded" />
+      </div>
+    </div>
+
+    <!-- Modal for Camera Preview -->
+    <div
+      v-if="showModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+    >
+      <div class="bg-white p-4 rounded shadow-lg w-96">
+        <h2 class="text-lg font-bold mb-4">Camera Preview</h2>
+        <video id="cameraPreview" autoplay playsinline class="w-full rounded" :srcObject="videoStream"></video>
+        <div class="flex justify-end mt-4">
+          <button
+            @click="closeCameraModal"
+            class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 mr-2"
+          >
+            Cancel
+          </button>
+          <button
+            @click="captureImage"
+            class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+          >
+            Capture
+          </button>
+        </div>
       </div>
     </div>
 

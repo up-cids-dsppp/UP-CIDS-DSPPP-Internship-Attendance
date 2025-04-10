@@ -52,6 +52,11 @@ const router = createRouter({
       name: 'admin_add_intern',
       component: AddInternView,
     },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not_found',
+      component: () => import('@/views/404View.vue'),
+    },
   ],
 })
 
