@@ -23,8 +23,18 @@ class Intern(models.Model):
     def __str__(self):
         return self.full_name
 
+class Attendance(models.Model):
+    intern = models.ForeignKey(Intern, on_delete=models.CASCADE, related_name="attendance", null=True)  # Connect to Intern table
+    type = models.CharField(max_length=255, default="f2f")
+    time_in = models.DateTimeField()
+    time_out = models.DateTimeField(null=True, blank=True)  # Allow null if the intern hasn't clocked out yet
+
+    def __str__(self):
+        return f"Attendance for {self.intern.full_name} on {self.time_in.date()}"
+
 
 class Task(models.Model):
+    attendance = models.ForeignKey(Attendance, on_delete=models.CASCADE, related_name="tasks", null=True)  # Many-to-one relationship with Task
     description = models.TextField()
     remarks = models.CharField(max_length=255, blank=True, null=True)  # Optional remarks field
     created_at = models.DateTimeField(auto_now_add=True)
@@ -34,20 +44,10 @@ class Task(models.Model):
 
 
 class Image(models.Model):
-    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="images")  # Many-to-one relationship with Task
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="images", null=True)  # Many-to-one relationship with Task
     file = models.ImageField(upload_to='uploads/images/')  # Path where images will be stored
     uploaded_at = models.DateTimeField(auto_now_add=True)  # Timestamp of upload
 
     def __str__(self):
         return self.file.name
 
-
-class Attendance(models.Model):
-    intern = models.ForeignKey(Intern, on_delete=models.CASCADE, related_name="attendance")  # Connect to Intern table
-    type = models.CharField(max_length=255, default="f2f")
-    time_in = models.DateTimeField()
-    time_out = models.DateTimeField(null=True, blank=True)  # Allow null if the intern hasn't clocked out yet
-    tasks = models.ManyToManyField(Task, related_name="attendances")  # Many-to-Many relationship with Task
-
-    def __str__(self):
-        return f"Attendance for {self.intern.full_name} on {self.time_in.date()}"
