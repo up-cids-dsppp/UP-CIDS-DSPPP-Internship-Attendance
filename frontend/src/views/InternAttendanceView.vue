@@ -47,8 +47,8 @@ onMounted(async () => {
       <p><strong>Time In:</strong> {{ attendanceLog.time_in }}</p>
       <p><strong>Time Out:</strong> {{ attendanceLog.time_out || 'N/A' }}</p>
       <p><strong>Remarks:</strong> {{ attendanceLog.remarks || 'N/A' }}</p>
-      <div v-if="attendanceLog.tasks.length" class="mt-4">
-        <h2 class="text-xl font-semibold">Tasks</h2>
+      <h2 class="text-xl font-semibold mt-4">Tasks</h2>
+      <div v-if="attendanceLog.tasks.length">
         <div v-for="task in attendanceLog.tasks" :key="task.id" class="bg-gray-100 p-4 rounded-lg mt-4">
           <p><strong>Description:</strong> {{ task.description }}</p>
           <p><strong>Images:</strong></p>
@@ -60,6 +60,7 @@ onMounted(async () => {
           <p><strong>Remarks:</strong> {{ task.remarks || 'N/A' }}</p>
         </div>
       </div>
+      <div v-else class="text-gray-500">Loading tasks...</div>
     </div>
     <div v-else class="text-gray-500">Loading attendance log details...</div>
   </div>
