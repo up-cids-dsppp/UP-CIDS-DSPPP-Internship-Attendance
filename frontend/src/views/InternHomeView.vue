@@ -3,6 +3,8 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import NavBar from '../components/NavBar.vue'
+import { isTimedIn, tasksForTheDay, timeIn, timeOut, setTasksForTheDay } from '../stores/timeInOut'
+
 
 const router = useRouter()
 
@@ -41,7 +43,15 @@ onMounted(async () => {
 
 // Handle "Time In" button click
 const handleTimeIn = async () => {
+  timeIn()
   router.push('/intern/in') // Redirect to the time-in page
+}
+
+// Handle "Time Out" button click
+const handleTimeOut = () => {
+  timeOut()
+  router.push('/intern/out') // Redirect to the time-out page
+
 }
 
 // Handle "View" link click
@@ -59,16 +69,32 @@ const viewAttendanceLog = (logId) => {
     <div class="mt-8 px-6">
       <h2 class="text-xl font-bold">Welcome, {{ internFullName }}!</h2>
 
-      <!-- Green Div with Date, Time, and Time In Button -->
-      <div class="bg-green-500 text-white p-4 mt-4 rounded-lg max-w-md">
+      <!-- Time In/Out Section -->
+      <div
+        :class="[
+          'text-white p-4 mt-4 rounded-lg max-w-md',
+          isTimedIn ? 'bg-red-500' : 'bg-green-500'
+        ]"
+      >
         <p class="text-lg font-semibold">Today's Date: {{ currentDate }}</p>
         <p class="text-lg font-semibold">Current Time: {{ currentTime }}</p>
+        <p v-if="isTimedIn" class="text-lg font-semibold mt-2">
+          Tasks to accomplish: {{ tasksForTheDay }}
+        </p>
         <div class="flex justify-end mt-4">
-          <button 
-            @click="handleTimeIn" 
+          <button
+            v-if="!isTimedIn"
+            @click="handleTimeIn"
             class="bg-white text-green-500 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
           >
             Time In
+          </button>
+          <button
+            v-else
+            @click="handleTimeOut"
+            class="bg-white text-red-500 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
+          >
+            Time Out
           </button>
         </div>
       </div>

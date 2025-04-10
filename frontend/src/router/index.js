@@ -9,6 +9,7 @@ import AddInternView from '@/views/AddInternView.vue'
 import UnauthenticatedView from '@/views/UnauthenticatedView.vue'
 import InternAttendanceView from '@/views/InternAttendanceView.vue'
 import TimeInView from '@/views/TimeInView.vue'
+import TimeOutView from '@/views/TimeOutView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -42,6 +43,11 @@ const router = createRouter({
       path: '/intern/in',
       name: 'intern_in',
       component: TimeInView,
+    },
+    {
+      path: '/intern/out',
+      name: 'intern_out',
+      component: TimeOutView,
     },
     {
       path: '/admin/login',
