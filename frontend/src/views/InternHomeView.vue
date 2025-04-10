@@ -82,6 +82,7 @@ const viewAttendanceLog = (logId) => {
         <thead>
           <tr class="bg-gray-200">
             <th class="border border-gray-300 px-4 py-2">Date</th>
+            <th class="border border-gray-300 px-4 py-2">Type</th> <!-- Add Type Column -->
             <th class="border border-gray-300 px-4 py-2">Time In</th>
             <th class="border border-gray-300 px-4 py-2">Time Out</th>
             <th class="border border-gray-300 px-4 py-2">Actions</th>
@@ -90,6 +91,7 @@ const viewAttendanceLog = (logId) => {
         <tbody>
           <tr v-for="log in attendanceLogs" :key="log.id" class="text-center">
             <td class="border border-gray-300 px-4 py-2">{{ log.date }}</td>
+            <td class="border border-gray-300 px-4 py-2">{{ log.type }}</td> <!-- Display Type -->
             <td class="border border-gray-300 px-4 py-2">{{ log.time_in }}</td>
             <td class="border border-gray-300 px-4 py-2">{{ log.time_out || 'N/A' }}</td>
             <td class="border border-gray-300 px-4 py-2">

@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import permission_classes
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from .models import Intern, Attendance, Task  # Assuming these models exist
+from .models import Intern, Attendance, Task, Image  # Assuming these models exist
 from .auth import InternJWTAuthentication
 from datetime import timedelta
 from django.utils.dateformat import format
@@ -76,7 +76,7 @@ def manage_interns(request):
         intern = Intern.objects.create(
             full_name=data['full_name'],
             email=data['email'],
-            password=data['password'],  # Hash the password
+            password=data['password'],
             start_date=data['start_date'],
             time_to_render=timedelta(hours=hours),  # Convert hours to timedelta
         )
@@ -108,12 +108,18 @@ def intern_profile(request):
 @authentication_classes([InternJWTAuthentication, SessionAuthentication])
 def attendance_logs(request):
     try:
-        # Retrieve the authenticated intern
-        intern = request.user
+        # Extract the email from the JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(request.headers.get('Authorization').split()[1])
+        email = validated_token.get('email')
+
+        # Retrieve the intern using the email
+        intern = Intern.objects.get(email=email)
 
         # Retrieve and order attendance logs (most recent first)
-        logs = intern.attendance.order_by('-time_in').values(
+        logs = Attendance.objects.filter(intern=intern).order_by('-time_in').values(
             'id', 
+            'type',  # Include the type field
             'time_in', 
             'time_out'
         )
@@ -122,6 +128,7 @@ def attendance_logs(request):
         formatted_logs = [
             {
                 'id': log['id'],
+                'type': log['type'],  # Add type to the response
                 'date': format(log['time_in'], 'Y-m-d'),
                 'time_in': format(log['time_in'], 'H:i:s'),
                 'time_out': format(log['time_out'], 'H:i:s') if log['time_out'] else None,
@@ -137,23 +144,40 @@ def attendance_logs(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+@authentication_classes([InternJWTAuthentication, SessionAuthentication])
 def log_face_to_face_attendance(request):
     try:
-        intern = request.user  # Assuming the user is authenticated as an intern
+        # Extract the email from the JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(request.headers.get('Authorization').split()[1])
+        email = validated_token.get('email')
+
+        # Retrieve the intern using the email
+        intern = Intern.objects.get(email=email)
         face_screenshot = request.data.get('faceScreenshot')
-        remarks = request.data.get('remarks', 'present')
 
         if not face_screenshot:
             return JsonResponse({'message': 'Face screenshot is required.'}, status=400)
 
-        # Save the attendance record
-        Attendance.objects.create(
+        # Create a new Task
+        task = Task.objects.create(
+            description="face to face - in",
+            remarks="present"
+        )
+
+        # Create a new Image tied to the Task
+        image = Image.objects.create(
+            task=task,
+            file=face_screenshot  # Assuming face_screenshot is a valid file or base64-encoded image
+        )
+
+        # Create the Attendance record and associate the Task
+        attendance = Attendance.objects.create(
             intern=intern,
             type='f2f',
-            remarks=remarks,
-            face_screenshot=face_screenshot,
             time_in=now()
         )
+        attendance.tasks.add(task)  # Link the task to the attendance
 
         return JsonResponse({'message': 'Face-to-Face attendance logged successfully.'})
     except Exception as e:
@@ -161,9 +185,16 @@ def log_face_to_face_attendance(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+@authentication_classes([InternJWTAuthentication, SessionAuthentication])
 def log_asynchronous_attendance(request):
     try:
-        intern = request.user  # Assuming the user is authenticated as an intern
+         # Extract the email from the JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(request.headers.get('Authorization').split()[1])
+        email = validated_token.get('email')
+
+        # Retrieve the intern using the email
+        intern = Intern.objects.get(email=email)
         tasks_data = request.data.get('tasks', [])
 
         if not tasks_data or not all(task.get('description', '').strip() for task in tasks_data):

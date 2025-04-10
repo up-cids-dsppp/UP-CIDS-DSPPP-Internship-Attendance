@@ -44,6 +44,7 @@ class Image(models.Model):
 
 class Attendance(models.Model):
     intern = models.ForeignKey(Intern, on_delete=models.CASCADE, related_name="attendance")  # Connect to Intern table
+    type = models.CharField(max_length=255, default="f2f")
     time_in = models.DateTimeField()
     time_out = models.DateTimeField(null=True, blank=True)  # Allow null if the intern hasn't clocked out yet
     tasks = models.ManyToManyField(Task, related_name="attendances")  # Many-to-Many relationship with Task
