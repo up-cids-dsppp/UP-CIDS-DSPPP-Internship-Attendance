@@ -117,26 +117,28 @@ def attendance_logs(request):
         intern = Intern.objects.get(email=email)
 
         # Retrieve and order attendance logs (most recent first)
-        logs = Attendance.objects.filter(intern=intern).order_by('-time_in').values(
+        logs = Attendance.objects.filter(intern=intern).order_by('-time_in').prefetch_related('tasks').values(
             'id', 
             'type',  # Include the type field
             'time_in', 
             'time_out',
-            'status'  # Include the status field
+            'status',  # Include the status field
         )
 
         # Format the logs for frontend consumption
-        formatted_logs = [
-            {
+        formatted_logs = []
+        for log in logs:
+            # Retrieve tasks associated with the attendance log
+            tasks = Task.objects.filter(attendance=log['id']).values('id', 'description', 'remarks')
+            formatted_logs.append({
                 'id': log['id'],
                 'type': log['type'],  # Add type to the response
                 'date': format(log['time_in'], 'Y-m-d'),
                 'time_in': format(log['time_in'], 'H:i:s'),
                 'time_out': format(log['time_out'], 'H:i:s') if log['time_out'] else None,
                 'status': log['status'],  # Add status to the response
-            }
-            for log in logs
-        ]
+                'tasks': list(tasks),  # Include tasks in the response
+            })
 
         return JsonResponse(formatted_logs, safe=False)
     except Intern.DoesNotExist:

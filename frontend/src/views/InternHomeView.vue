@@ -41,10 +41,14 @@ onMounted(async () => {
     // Determine the most recent attendance
     if (attendanceLogs.value.length > 0) {
       mostRecentAttendance.value = attendanceLogs.value[0] // Most recent log is the first in the list
-      timeInOutStore.setTimedIn(mostRecentAttendance.value.status === 'ongoing') // Update the store
-      timeInOutStore.setTasksForTheDay(mostRecentAttendance.value.tasks?.length || 0) // Update the store
+
+      // Update the store with the correct values
+      timeInOutStore.setTimedIn(mostRecentAttendance.value.status === 'ongoing')
+
+      // Compute tasks for the day from the tasks array
+      const tasks = mostRecentAttendance.value.tasks || []
+      timeInOutStore.setTasksForTheDay(Array.isArray(tasks) ? tasks.length : 0)
     }
-    console.log('timedIn', timeInOutStore.isTimedIn)
   } catch (error) {
     console.error('Failed to fetch data:', error)
   }

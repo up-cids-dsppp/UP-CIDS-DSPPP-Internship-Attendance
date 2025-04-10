@@ -78,8 +78,6 @@ router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
   const timeInOutStore = useTimeInOutStore() // Access the Pinia store
 
-  console.log('timed in', timeInOutStore.isTimedIn)
-
   // Check if the user is logged in
   if (authStore.accessToken) {
     // Redirect to the appropriate home page based on user type
