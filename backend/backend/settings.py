@@ -115,10 +115,12 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+# Set the timezone to Asia/Manila
+TIME_ZONE = 'Asia/Manila'
 
 USE_I18N = True
 
+# Ensure timezone-aware datetimes are used
 USE_TZ = True
 
 

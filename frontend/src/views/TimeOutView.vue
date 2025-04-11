@@ -75,7 +75,7 @@ const handleSubmit = async () => {
   tasks.forEach(task => {
     formData.append(`tasks[${task.id}][remarks]`, task.remarks)
     task.images.forEach((image, index) => {
-      formData.append(`tasks[${task.id}][images][${index}]`, image)
+      formData.append(`tasks[${task.id}][images][${index}]`, image) // Ensure images are sent as files
     })
   })
 
@@ -136,52 +136,53 @@ onUnmounted(() => {
 
       <!-- Task List -->
       <h2 class="text-xl font-semibold mt-4">Tasks</h2>
-      <div v-for="task in tasks" :key="task.id" class="bg-gray-100 p-4 rounded-lg mt-4">
-        <p><strong>Description:</strong> {{ task.description }}</p>
-        
-        <div class="mt-4">
-          <p><strong>Images:</strong></p>
-          <label class="block text-sm font-medium text-gray-700">Upload Images:</label>
-          <input
-            type="file"
-            multiple
-            accept=".jpg,.jpeg,.png"
-            @change="(event) => { console.log('File input triggered', event.target.files);
-            handleFileUpload(task, event);}"
-            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
-          />
-          <div v-if="task.images.length" class="mt-2 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <img
-              v-for="(image, index) in task.images"
-              :key="index"
-              :src="image"
-              alt="Uploaded Image"
-              class="rounded-md"
-              style="max-height: 150px;"
+      <form @submit.prevent="handleSubmit" enctype="multipart/form-data">
+        <div v-for="task in tasks" :key="task.id" class="bg-gray-100 p-4 rounded-lg mt-4">
+          <p><strong>Description:</strong> {{ task.description }}</p>
+          
+          <div class="mt-4">
+            <p><strong>Images:</strong></p>
+            <label class="block text-sm font-medium text-gray-700">Upload Images:</label>
+            <input
+              type="file"
+              multiple
+              accept=".jpg,.jpeg,.png"
+              @change="(event) => handleFileUpload(task, event)"
+              class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
             />
+            <div v-if="task.images.length" class="mt-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <img
+                v-for="(image, index) in task.images"
+                :key="index"
+                :src="image"
+                alt="Uploaded Image"
+                class="rounded-md"
+                style="max-height: 150px;"
+              />
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <p><strong>Remarks:</strong></p>
+            <textarea
+              v-model="task.remarks"
+              rows="3"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+              placeholder="Enter remarks for this task"
+            ></textarea>
           </div>
         </div>
 
-        <div class="mt-4">
-          <p><strong>Remarks:</strong></p>
-          <textarea
-            v-model="task.remarks"
-            rows="3"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
-            placeholder="Enter remarks for this task"
-          ></textarea>
+        <!-- Submit Button -->
+        <div class="mt-6">
+          <button
+            type="submit"
+            class="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition"
+          >
+            Submit
+          </button>
         </div>
-      </div>
-
-      <!-- Submit Button -->
-      <div class="mt-6">
-        <button
-          @click="handleSubmit"
-          class="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition"
-        >
-          Submit
-        </button>
-      </div>
+      </form>
     </div>
     <div v-else class="text-gray-500">Loading attendance log details...</div>
   </div>

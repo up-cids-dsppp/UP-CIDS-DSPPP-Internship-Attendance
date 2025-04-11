@@ -15,6 +15,7 @@ from .auth import InternJWTAuthentication
 from datetime import timedelta
 from django.utils.dateformat import format
 from django.utils.timezone import now
+from django.utils.timezone import localtime
 
 
 @api_view(['POST'])
@@ -133,9 +134,9 @@ def attendance_logs(request):
             formatted_logs.append({
                 'id': log['id'],
                 'type': log['type'],  # Add type to the response
-                'date': format(log['time_in'], 'Y-m-d'),
-                'time_in': format(log['time_in'], 'H:i:s'),
-                'time_out': format(log['time_out'], 'H:i:s') if log['time_out'] else None,
+                'date': format(localtime(log['time_in']), 'Y-m-d'),
+                'time_in': format(localtime(log['time_in']), 'H:i:s'),
+                'time_out': format(localtime(log['time_out']), 'H:i:s') if log['time_out'] else None,
                 'status': log['status'],  # Add status to the response
                 'tasks': list(tasks),  # Include tasks in the response
             })
@@ -252,9 +253,9 @@ def attendance_log_details(request, log_id):
         response_data = {
             'id': attendance.id,
             'type': attendance.type,
-            'date': format(attendance.time_in, 'Y-m-d'),
-            'time_in': format(attendance.time_in, 'H:i:s'),
-            'time_out': format(attendance.time_out, 'H:i:s') if attendance.time_out else None,
+            'date': format(localtime(attendance.time_in), 'Y-m-d'),
+            'time_in': format(localtime(attendance.time_in), 'H:i:s'),
+            'time_out': format(localtime(attendance.time_out), 'H:i:s') if attendance.time_out else None,
             'tasks': tasks_data,
         }
 
@@ -281,20 +282,25 @@ def submit_timeout(request, log_id):
         attendance = Attendance.objects.get(id=log_id, intern=intern)
 
         # Update tasks with remarks and images
-        tasks_data = request.data.getlist('tasks')  # Expecting tasks as a list of dictionaries
-        for task_data in tasks_data:
-            task_id = task_data.get('id')
-            remarks = task_data.get('remarks')
-            images = request.FILES.getlist(f'tasks[{task_id}][images]')
+        tasks_data = request.POST  # Form data for remarks
+        files = request.FILES  # Uploaded files
 
-            # Update the task
-            task = Task.objects.get(id=task_id, attendance=attendance)
-            task.remarks = remarks
-            task.save()
+        for task_id, remarks in tasks_data.items():
+            if task_id.startswith('tasks[') and task_id.endswith('][remarks]'):
+                # Extract the task ID
+                task_id = int(task_id.split('[')[1].split(']')[0])
 
-            # Save uploaded images
-            for image in images:
-                Image.objects.create(task=task, file=image)
+                # Update the task
+                task = Task.objects.get(id=task_id, attendance=attendance)
+                task.remarks = remarks
+                task.save()
+
+                # Save uploaded images for the task
+                image_field_prefix = f'tasks[{task_id}][images]'
+                for key, file in files.items():
+                    if key.startswith(image_field_prefix):
+                        # Save the file to the database
+                        Image.objects.create(task=task, file=file)
 
         # Update the attendance status and time_out
         attendance.status = 'sent'
