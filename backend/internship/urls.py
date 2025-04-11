@@ -17,5 +17,5 @@ urlpatterns = [
     path('intern/attendance/f2f', views.log_face_to_face_attendance, name='log_face_to_face_attendance'),
     path('intern/attendance/async', views.log_asynchronous_attendance, name='log_asynchronous_attendance'),
     path('intern/attendance/log/<int:log_id>/', views.attendance_log_details, name='attendance_log_details'),
-
+    path('intern/attendance/log/<int:log_id>/submit', views.submit_timeout, name='submit_timeout'),
 ]

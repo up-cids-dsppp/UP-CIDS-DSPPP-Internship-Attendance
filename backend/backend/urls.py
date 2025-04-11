@@ -17,9 +17,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from internship import views
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('internship/', include('internship.urls')),  # Ensure the trailing slash is present
 ]
+
+# Add media URL patterns
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

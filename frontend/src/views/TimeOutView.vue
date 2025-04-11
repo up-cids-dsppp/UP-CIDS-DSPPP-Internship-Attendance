@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import NavBar from '../components/NavBar.vue'
@@ -10,6 +10,8 @@ const logId = route.params.log_id // Get the log ID from the route parameter
 const internEmail = ref('') // Intern email
 const attendanceLog = ref(null) // Store the attendance log details
 const tasks = reactive([]) // Task list with descriptions, images, and remarks
+
+const objectURLs = new Set()
 
 // Fetch attendance log details and tasks on component mount
 onMounted(async () => {
@@ -39,7 +41,18 @@ const handleFileUpload = (task, event) => {
   console.log('File input triggered', event.target.files)
   const files = event.target.files
   if (files && files.length > 0) {
-    task.images.push(...Array.from(files)) // Store raw File objects directly
+    // Revoke existing object URLs to avoid memory leaks
+    task.images.forEach((image) => {
+      if (typeof image === 'string') {
+        URL.revokeObjectURL(image)
+      }
+    })
+
+    // Create new object URLs for the uploaded files
+    const newImages = Array.from(files).map((file) => URL.createObjectURL(file))
+
+    // Update the task's images array
+    task.images = [...newImages]
   }
 }
 
@@ -83,6 +96,25 @@ const handleSubmit = async () => {
 const goBack = () => {
   router.back()
 }
+
+// Get image URL
+const getImageURL = (file) => {
+  const url = URL.createObjectURL(file)
+  objectURLs.add(url)
+  return url
+}
+
+onUnmounted(() => {
+  objectURLs.forEach((url) => URL.revokeObjectURL(url))
+  objectURLs.clear()
+  tasks.forEach((task) => {
+    task.images.forEach((image) => {
+      if (typeof image === 'string') {
+        URL.revokeObjectURL(image)
+      }
+    })
+  })
+})
 </script>
 
 <template>
@@ -122,7 +154,7 @@ const goBack = () => {
             <img
               v-for="(image, index) in task.images"
               :key="index"
-              :src="URL.createObjectURL(image)"
+              :src="image"
               alt="Uploaded Image"
               class="rounded-md"
               style="max-height: 150px;"

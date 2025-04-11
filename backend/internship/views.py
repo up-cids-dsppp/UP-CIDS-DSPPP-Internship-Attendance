@@ -263,3 +263,48 @@ def attendance_log_details(request, log_id):
         return JsonResponse({'message': 'Attendance log not found'}, status=404)
     except Exception as e:
         return JsonResponse({'message': str(e)}, status=400)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([InternJWTAuthentication, SessionAuthentication])
+def submit_timeout(request, log_id):
+    try:
+        # Extract the email from the JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(request.headers.get('Authorization').split()[1])
+        email = validated_token.get('email')
+
+        # Retrieve the intern using the email
+        intern = Intern.objects.get(email=email)
+
+        # Retrieve the attendance log
+        attendance = Attendance.objects.get(id=log_id, intern=intern)
+
+        # Update tasks with remarks and images
+        tasks_data = request.data.getlist('tasks')  # Expecting tasks as a list of dictionaries
+        for task_data in tasks_data:
+            task_id = task_data.get('id')
+            remarks = task_data.get('remarks')
+            images = request.FILES.getlist(f'tasks[{task_id}][images]')
+
+            # Update the task
+            task = Task.objects.get(id=task_id, attendance=attendance)
+            task.remarks = remarks
+            task.save()
+
+            # Save uploaded images
+            for image in images:
+                Image.objects.create(task=task, file=image)
+
+        # Update the attendance status and time_out
+        attendance.status = 'sent'
+        attendance.time_out = now()
+        attendance.save()
+
+        return JsonResponse({'message': 'Timeout submitted successfully.'}, status=200)
+    except Attendance.DoesNotExist:
+        return JsonResponse({'message': 'Attendance log not found'}, status=404)
+    except Task.DoesNotExist:
+        return JsonResponse({'message': 'Task not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'message': str(e)}, status=400)
