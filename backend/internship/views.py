@@ -285,11 +285,6 @@ def submit_timeout(request, log_id):
         tasks_data = request.POST  # Form data for remarks
         files = request.FILES  # Uploaded files
 
-        # Log the received files
-        print("Received files:")
-        for key, file in files.items():
-            print(f"Key: {key}, File Name: {file.name}, Content Type: {file.content_type}, Size: {file.size}")
-
         for task_id, remarks in tasks_data.items():
             if task_id.startswith('tasks[') and task_id.endswith('][remarks]'):
                 # Extract the task ID

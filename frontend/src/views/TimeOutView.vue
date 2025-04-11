@@ -51,6 +51,20 @@ const handleFileUpload = (task, event) => {
 
 // Validate and submit the tasks
 const handleSubmit = async () => {
+  // Validate tasks
+  for (const task of tasks) {
+    if (!task.remarks || task.remarks.trim() === '') {
+      alert(`Please provide remarks for the task: "${task.description}"`)
+      return
+    }
+
+    if (!task.images || task.images.length === 0) {
+      alert(`Please upload at least one image for the task: "${task.description}"`)
+      return
+    }
+  }
+
+  // Prepare form data
   const formData = new FormData()
   tasks.forEach(task => {
     formData.append(`tasks[${task.id}][remarks]`, task.remarks)
