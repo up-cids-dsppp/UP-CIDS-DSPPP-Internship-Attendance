@@ -157,5 +157,5 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,  # Blacklist old refresh tokens after rotation
 }
 
-MEDIA_URL = '/media/'  # URL to access media files
+MEDIA_URL = 'media/'  # URL to access media files
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Directory to store uploaded files

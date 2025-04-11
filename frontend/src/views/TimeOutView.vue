@@ -24,12 +24,13 @@ onMounted(async () => {
     const logResponse = await axios.get(`/intern/attendance/log/${logId}`) // Replace with the correct endpoint
     attendanceLog.value = logResponse.data
 
-    // Populate tasks with descriptions, images, and remarks
+    // Populate tasks with descriptions, images, remarks, and initialize imagePreviews
     tasks.push(...attendanceLog.value.tasks.map(task => ({
       id: task.id,
       description: task.description,
       images: [],
       remarks: '',
+      imagePreviews: [], // Initialize imagePreviews as an empty array
     })))
   } catch (error) {
     console.error('Failed to fetch data:', error)
@@ -38,54 +39,32 @@ onMounted(async () => {
 
 // Handle file upload for a task
 const handleFileUpload = (task, event) => {
-  console.log('File input triggered', event.target.files)
   const files = event.target.files
   if (files && files.length > 0) {
-    // Revoke existing object URLs to avoid memory leaks
-    task.images.forEach((image) => {
-      if (typeof image === 'string') {
-        URL.revokeObjectURL(image)
-      }
-    })
+    // Store the actual file objects in the task.images array
+    task.images = Array.from(files)
 
-    // Create new object URLs for the uploaded files
-    const newImages = Array.from(files).map((file) => URL.createObjectURL(file))
-
-    // Update the task's images array
-    task.images = [...newImages]
+    // Generate blob URLs for preview
+    task.imagePreviews = task.images.map(file => getImageURL(file))
   }
 }
 
 // Validate and submit the tasks
 const handleSubmit = async () => {
-  // Validate all tasks
-  for (const task of tasks) {
-    if (!task.remarks.trim()) {
-      alert(`Remarks are required for task: ${task.description}`)
-      return
-    }
-    if (task.images.length === 0) {
-      alert(`At least one image is required for task: ${task.description}`)
-      return
-    }
-  }
-
-  // Prepare form data for submission
   const formData = new FormData()
   tasks.forEach(task => {
     formData.append(`tasks[${task.id}][remarks]`, task.remarks)
     task.images.forEach((image, index) => {
-      formData.append(`tasks[${task.id}][images][${index}]`, image) // Ensure images are sent as files
+      formData.append(`tasks[${task.id}][images][${index}]`, image) // Append the actual file objects
     })
   })
 
   try {
-    // Submit the tasks
     await axios.post(`/intern/attendance/log/${logId}/submit`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     alert('Tasks submitted successfully!')
-    router.push('/intern/home') // Redirect to the home page
+    router.push('/intern/home')
   } catch (error) {
     console.error('Failed to submit tasks:', error)
     alert('Failed to submit tasks. Please try again.')
@@ -108,11 +87,11 @@ onUnmounted(() => {
   objectURLs.forEach((url) => URL.revokeObjectURL(url))
   objectURLs.clear()
   tasks.forEach((task) => {
-    task.images.forEach((image) => {
-      if (typeof image === 'string') {
+    if (task.imagePreviews) {
+      task.imagePreviews.forEach((image) => {
         URL.revokeObjectURL(image)
-      }
-    })
+      })
+    }
   })
 })
 </script>
@@ -150,9 +129,9 @@ onUnmounted(() => {
               @change="(event) => handleFileUpload(task, event)"
               class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
             />
-            <div v-if="task.images.length" class="mt-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div v-if="task.imagePreviews.length" class="mt-2 grid grid-cols-1 md:grid-cols-3 gap-4">
               <img
-                v-for="(image, index) in task.images"
+                v-for="(image, index) in task.imagePreviews"
                 :key="index"
                 :src="image"
                 alt="Uploaded Image"
