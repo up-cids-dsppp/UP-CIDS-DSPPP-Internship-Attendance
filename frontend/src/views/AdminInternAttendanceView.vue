@@ -71,6 +71,7 @@ const submitFeedback = async () => {
     showModal.value = false // Close modal
     feedbackType.value = '' // Reset dropdown
     feedbackRemarks.value = '' // Reset text area
+    location.reload() // Refresh the page
   } catch (error) {
     console.error('Failed to submit feedback:', error)
     alert('Failed to submit feedback. Please try again.')

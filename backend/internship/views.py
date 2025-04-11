@@ -418,9 +418,15 @@ def attendance_feedback(request, log_id):
         if not feedback_type or not feedback_remarks:
             return JsonResponse({'message': 'Both type and remarks are required.'}, status=400)
 
+        # Map feedback type to status
+        status_mapping = {
+            'Validate': 'validated',
+            'Flag': 'flagged',
+        }
+
         # Update the attendance log
-        attendance.type = feedback_type
-        attendance.remarks = feedback_remarks
+        attendance.status = status_mapping.get(feedback_type, attendance.status)  # Default to current status if type is invalid
+        attendance.remarks = feedback_remarks  # Update the remarks field
         attendance.save()
 
         return JsonResponse({'message': 'Feedback submitted successfully.'}, status=200)
