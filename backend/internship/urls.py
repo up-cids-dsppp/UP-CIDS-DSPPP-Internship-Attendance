@@ -13,11 +13,13 @@ urlpatterns = [
     path('intern/attendance/async', views.log_asynchronous_attendance, name='log_asynchronous_attendance'),
     path('intern/attendance/log/<int:log_id>/', views.attendance_log_details, name='attendance_log_details'),
     path('intern/attendance/log/<int:log_id>/submit', views.submit_timeout, name='submit_timeout'),
-    
+
     path('admin/login', views.admin_login, name='admin_login'),
     path('admin/profile', views.admin_profile, name='admin_profile'),
     path('admin/interns', views.manage_interns, name='manage_interns'),
     path('admin/interns/<int:intern_id>/', views.get_intern_details, name='get_intern_details'),
+    path('admin/interns/attendance/<int:log_id>/', views.get_intern_attendance, name='get_intern_attendance_details'),
+   
 
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

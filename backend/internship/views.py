@@ -363,3 +363,39 @@ def submit_timeout(request, log_id):
     except Exception as e:
         print(f"Error: {str(e)}")  # Log the error for debugging
         return JsonResponse({'message': str(e)}, status=400)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@user_passes_test(lambda u: u.is_superuser)  # Ensure only admins can access
+def get_intern_attendance(request, log_id):
+    try:
+        # Retrieve the specific attendance log
+        attendance = Attendance.objects.get(id=log_id)
+
+        # Retrieve associated tasks
+        tasks = attendance.tasks.all()
+        tasks_data = []
+        for task in tasks:
+            images = task.images.all().values('id', 'file')
+            tasks_data.append({
+                'id': task.id,
+                'description': task.description,
+                'remarks': task.remarks,
+                'images': list(images),
+            })
+
+        # Format the response
+        response_data = {
+            'id': attendance.id,
+            'type': attendance.type,
+            'date': format(localtime(attendance.time_in), 'Y-m-d'),
+            'time_in': format(localtime(attendance.time_in), 'H:i:s'),
+            'time_out': format(localtime(attendance.time_out), 'H:i:s') if attendance.time_out else None,
+            'tasks': tasks_data,
+        }
+
+        return JsonResponse(response_data)
+    except Attendance.DoesNotExist:
+        return JsonResponse({'message': 'Attendance log not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'message': str(e)}, status=400)

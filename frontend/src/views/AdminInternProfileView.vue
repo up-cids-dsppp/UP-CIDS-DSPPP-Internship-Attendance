@@ -51,7 +51,7 @@ onMounted(async () => {
 
 // Handle "View" link click
 const viewAttendanceLog = (logId) => {
-  router.push(`/admin/intern/attendance/${logId}`) // Redirect to the attendance log details page
+  router.push(`/admin/interns/attendance/${logId}`) // Redirect to the attendance log details page
 }
 
 const goBack = () => {

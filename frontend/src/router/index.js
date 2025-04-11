@@ -13,6 +13,7 @@ import TimeOutView from '@/views/TimeOutView.vue'
 import AdminInternProfileView from '@/views/AdminInternProfileView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import { useTimeInOutStore } from '../stores/timeInOut'
+import AdminInternAttendanceView from '@/views/AdminInternAttendanceView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -71,6 +72,11 @@ const router = createRouter({
       path: '/admin/interns/:id',
       name: 'admin_intern_profile',
       component: AdminInternProfileView, // Correctly reference the imported component
+    },
+    {
+      path: '/admin/interns/attendance/:id',
+      name: 'admin_intern_attendance',
+      component: AdminInternAttendanceView, // Correctly reference the imported component
     },
     {
       path: '/:pathMatch(.*)*',
