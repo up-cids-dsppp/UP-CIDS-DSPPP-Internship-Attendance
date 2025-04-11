@@ -41,6 +41,22 @@ onMounted(async () => {
     console.error('Failed to fetch attendance log:', error)
   }
 })
+
+// Function to determine the status color
+const getStatusColor = (status) => {
+  switch (status) {
+    case 'validated':
+      return 'text-green-500'
+    case 'sent':
+      return 'text-orange-500'
+    case 'flagged':
+      return 'text-red-500'
+    case 'ongoing':
+      return 'text-black'
+    default:
+      return 'text-gray-500'
+  }
+}
 </script>
 
 <template>
@@ -54,11 +70,16 @@ onMounted(async () => {
     </p>
     <div v-if="attendanceLog">
       <h1 class="text-2xl font-bold mb-4">Attendance Log Details</h1>
-      <p><strong>Date:</strong> {{ attendanceLog.date }}</p>
-      <p><strong>Type:</strong> {{ attendanceLog.type }}</p>
-      <p><strong>Time In:</strong> {{ attendanceLog.time_in }}</p>
-      <p><strong>Time Out:</strong> {{ attendanceLog.time_out || 'N/A' }}</p>
-      <p><strong>Remarks:</strong> {{ attendanceLog.remarks || 'N/A' }}</p>
+      <p><strong>Date: </strong>{{ attendanceLog.date }}</p>
+      <p><strong>Type: </strong>{{ attendanceLog.type }}</p>
+      <p><strong>Status: </strong> 
+        <span :class="getStatusColor(attendanceLog.status)">
+          {{ attendanceLog.status }}
+        </span>
+      </p>
+      <p><strong>Time In: </strong>{{ attendanceLog.time_in }}</p>
+      <p><strong>Time Out: </strong>{{ attendanceLog.time_out || 'N/A' }}</p>
+      <p><strong>Remarks: </strong>{{ attendanceLog.remarks || 'N/A' }}</p>
       <h2 class="text-xl font-semibold mt-4">Tasks</h2>
       <div v-if="attendanceLog.tasks.length">
         <div v-for="task in attendanceLog.tasks" :key="task.id" class="bg-gray-100 p-4 rounded-lg mt-4">

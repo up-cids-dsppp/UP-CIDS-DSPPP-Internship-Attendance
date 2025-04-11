@@ -301,6 +301,7 @@ def attendance_log_details(request, log_id):
         response_data = {
             'id': attendance.id,
             'type': attendance.type,
+            'status': attendance.status,  # Include status in the response
             'date': format(localtime(attendance.time_in), 'Y-m-d'),
             'time_in': format(localtime(attendance.time_in), 'H:i:s'),
             'time_out': format(localtime(attendance.time_out), 'H:i:s') if attendance.time_out else None,
@@ -388,6 +389,7 @@ def get_intern_attendance(request, log_id):
         response_data = {
             'id': attendance.id,
             'type': attendance.type,
+            'status': attendance.status,  # Include status in the response
             'date': format(localtime(attendance.time_in), 'Y-m-d'),
             'time_in': format(localtime(attendance.time_in), 'H:i:s'),
             'time_out': format(localtime(attendance.time_out), 'H:i:s') if attendance.time_out else None,
@@ -395,6 +397,33 @@ def get_intern_attendance(request, log_id):
         }
 
         return JsonResponse(response_data)
+    except Attendance.DoesNotExist:
+        return JsonResponse({'message': 'Attendance log not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'message': str(e)}, status=400)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@user_passes_test(lambda u: u.is_superuser)  # Ensure only admins can access
+def attendance_feedback(request, log_id):
+    try:
+        # Retrieve the attendance log by ID
+        attendance = Attendance.objects.get(id=log_id)
+
+        # Extract feedback data from the request
+        feedback_type = request.data.get('type')
+        feedback_remarks = request.data.get('remarks')
+
+        # Validate the feedback data
+        if not feedback_type or not feedback_remarks:
+            return JsonResponse({'message': 'Both type and remarks are required.'}, status=400)
+
+        # Update the attendance log
+        attendance.type = feedback_type
+        attendance.remarks = feedback_remarks
+        attendance.save()
+
+        return JsonResponse({'message': 'Feedback submitted successfully.'}, status=200)
     except Attendance.DoesNotExist:
         return JsonResponse({'message': 'Attendance log not found'}, status=404)
     except Exception as e:

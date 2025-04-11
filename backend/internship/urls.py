@@ -19,7 +19,7 @@ urlpatterns = [
     path('admin/interns', views.manage_interns, name='manage_interns'),
     path('admin/interns/<int:intern_id>/', views.get_intern_details, name='get_intern_details'),
     path('admin/interns/attendance/<int:log_id>/', views.get_intern_attendance, name='get_intern_attendance_details'),
-   
+    path('admin/interns/attendance/<int:log_id>/feedback', views.attendance_feedback, name='attendance_feedback'),
 
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
