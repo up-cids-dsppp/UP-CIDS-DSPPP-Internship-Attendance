@@ -33,8 +33,9 @@ const goToAddIntern = () => {
     <!-- Navbar Component -->
     <NavBar userType="admin" :userEmail="adminEmail" />
 
-    <!-- Add Intern Button -->
-    <div class="flex justify-center mt-6">
+    <!-- Interns Section -->
+    <div class="mt-8 px-6">
+      <div class="flex mb-6">
       <button 
         @click="goToAddIntern" 
         class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition"
@@ -42,9 +43,6 @@ const goToAddIntern = () => {
         Add new intern
       </button>
     </div>
-
-    <!-- Interns Section -->
-    <div class="mt-8 px-6">
       <h2 class="text-xl font-bold mb-4">Interns</h2>
       <div v-if="interns.length === 0" class="text-gray-500 text-center">
         No interns registered.

@@ -85,6 +85,54 @@ def manage_interns(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+@user_passes_test(lambda u: u.is_superuser)  # Ensure only admins can access
+def get_intern_details(request, intern_id):
+    try:
+        # Retrieve the intern by ID
+        intern = Intern.objects.get(id=intern_id)
+
+        # Retrieve attendance logs linked to the intern
+        attendance_logs = Attendance.objects.filter(intern=intern).values(
+            'id',
+            'type',
+            'time_in',
+            'time_out',
+            'status'
+        )
+
+        # Format attendance logs for the response
+        formatted_logs = []
+        for log in attendance_logs:
+            formatted_logs.append({
+                'id': log['id'],
+                'type': log['type'],
+                'date': format(localtime(log['time_in']), 'Y-m-d'),
+                'time_in': format(localtime(log['time_in']), 'H:i:s'),
+                'time_out': format(localtime(log['time_out']), 'H:i:s') if log['time_out'] else None,
+                'status': log['status'],
+            })
+
+        print('time_to_render:', intern.time_to_render)
+
+        # Return all details except the password
+        intern_data = {
+            'id': intern.id,
+            'full_name': intern.full_name,
+            'email': intern.email,
+            'start_date': intern.start_date,
+            'time_to_render': intern.time_to_render.total_seconds() / 3600,  # Convert timedelta to hours
+            'time_rendered': intern.time_rendered.total_seconds() / 3600 if intern.time_rendered else 0,  # Convert timedelta to hours
+            'status': intern.status,  # Assuming a status field exists
+            'attendance_logs': formatted_logs,  # Include attendance logs
+        }
+        return JsonResponse(intern_data, safe=False)
+    except Intern.DoesNotExist:
+        return JsonResponse({'message': 'Intern not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'message': str(e)}, status=400)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 @authentication_classes([InternJWTAuthentication, SessionAuthentication])
 def intern_profile(request):
     try:
