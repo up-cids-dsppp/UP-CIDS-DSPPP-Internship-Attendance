@@ -14,7 +14,7 @@ const navigateToIntern = () => {
 
 <template>
   <div class="flex flex-col items-center justify-center h-screen w-full text-center">
-    <h1 class="text-3xl font-bold mb-8">UP-CIDS-DSPP Internship Attendance</h1>
+    <h1 class="text-3xl font-bold mb-8">UP-CIDS-DSPPP Internship Attendance</h1>
     <div class="flex gap-4">
       <button 
         @click="navigateToIntern" 
