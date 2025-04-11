@@ -43,6 +43,8 @@ class Attendance(models.Model):
     time_in = models.DateTimeField()
     time_out = models.DateTimeField(null=True, blank=True)  # Allow null if the intern hasn't clocked out yet
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='ongoing')  # New status field
+    remarks = models.CharField(max_length=255, blank=True, null=True)  # Optional remarks field
+
 
     def __str__(self):
         return f"Attendance for {self.intern.full_name} on {self.time_in.date()}"

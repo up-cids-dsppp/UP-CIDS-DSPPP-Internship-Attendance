@@ -390,6 +390,7 @@ def get_intern_attendance(request, log_id):
             'id': attendance.id,
             'type': attendance.type,
             'status': attendance.status,  # Include status in the response
+            'remarks': attendance.remarks,  # Include remarks in the response
             'date': format(localtime(attendance.time_in), 'Y-m-d'),
             'time_in': format(localtime(attendance.time_in), 'H:i:s'),
             'time_out': format(localtime(attendance.time_out), 'H:i:s') if attendance.time_out else None,
@@ -427,9 +428,54 @@ def attendance_feedback(request, log_id):
         # Update the attendance log
         attendance.status = status_mapping.get(feedback_type, attendance.status)  # Default to current status if type is invalid
         attendance.remarks = feedback_remarks  # Update the remarks field
+
+        # If feedback type is "Validate", calculate duration and update intern's time_rendered
+        if feedback_type == 'Validate' and attendance.time_out:
+            duration = attendance.time_out - attendance.time_in
+            intern = attendance.intern
+            intern.time_rendered += duration
+            intern.save()
+
         attendance.save()
 
         return JsonResponse({'message': 'Feedback submitted successfully.'}, status=200)
+    except Attendance.DoesNotExist:
+        return JsonResponse({'message': 'Attendance log not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'message': str(e)}, status=400)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@user_passes_test(lambda u: u.is_superuser)  # Ensure only admins can access
+def evaluate_attendance(request, log_id):
+    try:
+        # Retrieve the attendance log by ID
+        attendance = Attendance.objects.get(id=log_id)
+
+        # Extract evaluation data from the request
+        duration = request.data.get('duration')
+        remarks = request.data.get('remarks')
+
+        # Validate inputs
+        if duration is None or remarks is None:
+            return JsonResponse({'message': 'Duration and remarks are required.'}, status=400)
+
+        # Ensure duration is within valid range
+        max_duration = (attendance.time_out - attendance.time_in).total_seconds()
+        if not (0 <= float(duration) <= max_duration):
+            return JsonResponse({'message': 'Invalid duration value.'}, status=400)
+
+        # Update intern's time_rendered
+        intern = attendance.intern
+        intern.time_rendered += timedelta(seconds=float(duration))
+        intern.save()
+
+        # Update attendance log
+        attendance.remarks = remarks
+        attendance.status = 'validated'
+        attendance.save()
+
+        return JsonResponse({'message': 'Attendance evaluated successfully.'}, status=200)
     except Attendance.DoesNotExist:
         return JsonResponse({'message': 'Attendance log not found'}, status=404)
     except Exception as e:
