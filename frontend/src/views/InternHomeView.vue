@@ -59,9 +59,10 @@ const handleTimeIn = async () => {
   router.push('/intern/in') // Redirect to the time-in page
 }
 
-// Handle "Time Out" button click
+// Redirect to the time-out page with the ongoing attendance log ID
 const handleTimeOut = () => {
-  router.push('/intern/out') // Redirect to the time-out page
+  const ongoingLogId = mostRecentAttendance.value.id // Get the ongoing attendance log ID
+  router.push(`/intern/out/${ongoingLogId}`)
 }
 
 // Handle "View" link click

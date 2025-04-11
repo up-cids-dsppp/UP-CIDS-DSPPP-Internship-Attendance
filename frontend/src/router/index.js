@@ -46,7 +46,7 @@ const router = createRouter({
       component: TimeInView,
     },
     {
-      path: '/intern/out',
+      path: '/intern/out/:log_id',
       name: 'intern_out',
       component: TimeOutView,
     },
