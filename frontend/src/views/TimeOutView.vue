@@ -62,7 +62,7 @@ const handleSubmit = async () => {
   tasks.forEach(task => {
     formData.append(`tasks[${task.id}][remarks]`, task.remarks)
     task.images.forEach((image, index) => {
-      formData.append(`tasks[${task.id}][images][${index}]`, image.file)
+      formData.append(`tasks[${task.id}][images][${index}]`, image)
     })
   })
 
@@ -113,8 +113,9 @@ const goBack = () => {
           <input
             type="file"
             multiple
-            accept="image/*"
-            @change="(event) => { console.log('File input triggered', event.target.files); handleFileUpload(task, event); }"
+            accept=".jpg,.jpeg,.png"
+            @change="(event) => { console.log('File input triggered', event.target.files);
+            handleFileUpload(task, event);}"
             class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
           />
           <div v-if="task.images.length" class="mt-2 grid grid-cols-1 md:grid-cols-3 gap-4">
