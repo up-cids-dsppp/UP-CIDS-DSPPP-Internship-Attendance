@@ -16,6 +16,7 @@ const internDetails = ref({
   time_to_render: 0,
   time_rendered: 0,
   status: '',
+  admin_remarks: '',
 })
 
 // Attendance logs
@@ -47,7 +48,12 @@ onMounted(async () => {
       time_to_render: data.time_to_render,
       time_rendered: data.time_rendered,
       status: data.status,
+      admin_remarks: data.admin_remarks,
     }
+
+    // Save the intern's status in the timeInOutStore
+    timeInOutStore.setInternStatus(data.status)
+    console.log('Intern status:', data.status)
 
     // Set attendance logs
     attendanceLogs.value = data.attendance_logs
@@ -114,8 +120,26 @@ const viewAttendanceLog = (logId) => {
         </span>
       </p>
 
-      <!-- Time In/Out Section -->
+      <!-- Status Section -->
       <div
+        v-if="internDetails.status === 'completed'"
+        class="text-white p-4 mt-4 rounded-lg max-w-md bg-green-500"
+      >
+        <p class="text-lg font-semibold">Status: Completed</p>
+        <p class="mt-2"><strong>Admin Remarks:</strong><br>{{ internDetails.admin_remarks || 'No remarks provided.' }}</p>
+      </div>
+
+      <div
+        v-else-if="internDetails.status === 'dropped'"
+        class="text-white p-4 mt-4 rounded-lg max-w-md bg-red-500"
+      >
+        <p class="text-lg font-semibold">Status: Dropped</p>
+        <p class="mt-2"><strong>Admin Remarks:</strong><br>{{ internDetails.admin_remarks || 'No remarks provided.' }}</p>
+        <p class="text-lg"><br>Please email admin for re-evaluation.</p>
+      </div>
+
+      <div
+        v-else
         :class="[
           'text-white p-4 mt-4 rounded-lg max-w-md',
           timeInOutStore.isTimedIn ? 'bg-red-500' : 'bg-green-500'

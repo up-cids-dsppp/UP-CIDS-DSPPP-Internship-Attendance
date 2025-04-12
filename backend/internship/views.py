@@ -150,8 +150,13 @@ def log_face_to_face_attendance(request):
 
         # Retrieve the intern using the email
         intern = Intern.objects.get(email=email)
-        face_screenshot = request.data.get('faceScreenshot')
 
+        # Restrict access for completed or dropped interns
+        if intern.status in ['completed', 'dropped']:
+            return JsonResponse({'message': 'You are not allowed to log attendance with your current status.'}, status=403)
+
+        # Proceed with logging attendance
+        face_screenshot = request.data.get('faceScreenshot')
         if not face_screenshot:
             return JsonResponse({'message': 'Face screenshot is required.'}, status=400)
 
@@ -184,15 +189,19 @@ def log_face_to_face_attendance(request):
 @authentication_classes([InternJWTAuthentication, SessionAuthentication])
 def log_asynchronous_attendance(request):
     try:
-         # Extract the email from the JWT token
+        # Extract the email from the JWT token
         jwt_auth = JWTAuthentication()
         validated_token = jwt_auth.get_validated_token(request.headers.get('Authorization').split()[1])
         email = validated_token.get('email')
 
         # Retrieve the intern using the email
         intern = Intern.objects.get(email=email)
-        tasks_data = request.data.get('tasks', [])
 
+        # Restrict access for completed or dropped interns
+        if intern.status in ['completed', 'dropped']:
+            return JsonResponse({'message': 'You are not allowed to log attendance with your current status.'}, status=403)
+
+        tasks_data = request.data.get('tasks', [])
         if not tasks_data or not all(task.get('description', '').strip() for task in tasks_data):
             return JsonResponse({'message': 'All task descriptions must be filled out.'}, status=400)
 
@@ -271,6 +280,10 @@ def submit_timeout(request, log_id):
 
         # Retrieve the intern using the email
         intern = Intern.objects.get(email=email)
+
+        # Restrict access for completed or dropped interns
+        if intern.status in ['completed', 'dropped']:
+            return JsonResponse({'message': 'You are not allowed to submit a timeout with your current status.'}, status=403)
 
         # Retrieve the attendance log
         attendance = Attendance.objects.get(id=log_id, intern=intern)
@@ -515,6 +528,7 @@ def intern_profile_with_logs(request):
             'time_to_render': intern.time_to_render.total_seconds() / 3600,  # Convert timedelta to hours
             'time_rendered': intern.time_rendered.total_seconds() / 3600 if intern.time_rendered else 0,  # Convert timedelta to hours
             'status': intern.status,
+            'admin_remarks': intern.admin_remarks,
             'attendance_logs': formatted_logs,
         }
 

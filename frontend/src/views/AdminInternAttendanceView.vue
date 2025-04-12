@@ -188,7 +188,7 @@ const getStatusColor = (status) => {
       <p><strong>Time In: </strong>{{ attendanceLog.time_in }}</p>
       <p><strong>Time Out: </strong>{{ attendanceLog.time_out || 'N/A' }}</p>
       <p><strong>Work Duration: </strong>{{ (attendanceLog.work_duration || 0).toFixed(2) }} hours</p>
-      <p><strong>Admin Remarks: </strong>{{ attendanceLog.admin_remarks || 'N/A' }}</p>
+      <p><strong>Admin Remarks: </strong><br>{{ attendanceLog.admin_remarks || 'N/A' }}</p>
 
       <!-- Tasks Header -->
       <div v-if="attendanceLog">
@@ -209,7 +209,7 @@ const getStatusColor = (status) => {
                 />
               </div>
             </div>
-            <p class="mt-4"><strong>Remarks:</strong> {{ task.remarks || 'N/A' }}</p>
+            <p class="mt-4"><strong>Remarks:</strong><br>{{ task.remarks || 'N/A' }}</p>
           </div>
         </div>
         <div v-else class="text-gray-500">No tasks available.</div>

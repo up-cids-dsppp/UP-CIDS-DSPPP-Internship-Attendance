@@ -12,6 +12,7 @@ export const useTimeInOutStore = defineStore('timeInOut', () => {
   // Load initial state from localStorage
   const isTimedIn = ref(JSON.parse(localStorage.getItem(getStorageKey('isTimedIn'))) || false)
   const tasksForTheDay = ref(JSON.parse(localStorage.getItem(getStorageKey('tasksForTheDay'))) || 0)
+  const internStatus = ref(localStorage.getItem(getStorageKey('internStatus')) || '') // Load from localStorage
 
   // Actions to update the state
   function setTimedIn(status) {
@@ -20,6 +21,12 @@ export const useTimeInOutStore = defineStore('timeInOut', () => {
 
   function setTasksForTheDay(count) {
     tasksForTheDay.value = count
+  }
+
+  const setInternStatus = (status) => {
+    internStatus.value = status
+    localStorage.setItem(getStorageKey('internStatus'), status) // Persist to localStorage
+    console.log('Intern status set to:', status)
   }
 
   // Persist state to localStorage whenever it changes
@@ -34,7 +41,9 @@ export const useTimeInOutStore = defineStore('timeInOut', () => {
   return {
     isTimedIn,
     tasksForTheDay,
+    internStatus,
     setTimedIn,
     setTasksForTheDay,
+    setInternStatus,
   }
 })
