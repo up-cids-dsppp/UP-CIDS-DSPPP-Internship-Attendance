@@ -101,7 +101,18 @@ const viewAttendanceLog = (logId) => {
       <p class="mt-2"><strong>Start Date:</strong> {{ internDetails.start_date }}</p>
       <p class="mt-2"><strong>Time to be Rendered:</strong> {{ internDetails.time_to_render.toFixed(2) }} hours</p>
       <p class="mt-2"><strong>Time Rendered:</strong> {{ internDetails.time_rendered.toFixed(2) }} hours</p>
-      <p class="mt-2"><strong>Status:</strong> {{ internDetails.status }}</p>
+      <p class="mt-2">
+        <strong>Status: </strong> 
+        <span 
+          :class="{
+            'text-green-500': internDetails.status === 'completed',
+            'text-black': internDetails.status === 'ongoing',
+            'text-red-500': internDetails.status === 'dropped',
+          }"
+        >
+          {{ internDetails.status }}
+        </span>
+      </p>
 
       <!-- Time In/Out Section -->
       <div

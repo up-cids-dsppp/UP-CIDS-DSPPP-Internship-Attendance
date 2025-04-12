@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.hashers import make_password
 from django.db.models import Sum, F
+from datetime import timedelta
 
 class Intern(models.Model):
     STATUS_CHOICES = [
@@ -14,7 +15,7 @@ class Intern(models.Model):
     full_name = models.CharField(max_length=255)
     start_date = models.DateField()
     time_to_render = models.DurationField()  # Represents the total time to render (e.g., internship duration)
-    time_rendered = models.DurationField(default="0:00:00")  # Tracks time already rendered
+    time_rendered = models.DurationField(default=timedelta(seconds=0))  # Tracks time already rendered
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='ongoing')  # New status field
 
     @property
@@ -30,7 +31,7 @@ class Intern(models.Model):
         # Calculate the total work duration from validated attendance logs
         total_work_duration = Attendance.objects.filter(
             intern=self, status='validated'
-        ).aggregate(total_duration=Sum(F('work_duration')))['total_duration'] or 0
+        ).aggregate(total_duration=Sum(F('work_duration')))['total_duration'] or timedelta(seconds=0)
 
         # Update time_rendered with the calculated total work duration
         self.time_rendered = total_work_duration
@@ -38,6 +39,8 @@ class Intern(models.Model):
         # Check if time_rendered >= time_to_render and update status
         if self.time_rendered >= self.time_to_render:
             self.status = 'completed'
+        elif self.status != 'dropped':
+            self.status = 'ongoing'
 
         super().save(*args, **kwargs)
 

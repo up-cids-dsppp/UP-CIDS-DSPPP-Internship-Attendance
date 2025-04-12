@@ -78,7 +78,7 @@ const goBack = () => {
       <p class="mt-2"><strong>Time to be Rendered:</strong> {{ internDetails.time_to_render.toFixed(2) }} hours</p>
       <p class="mt-2"><strong>Time Rendered:</strong> {{ internDetails.time_rendered.toFixed(2) }} hours</p>
       <p class="mt-2">
-        <strong>Status:</strong> 
+        <strong>Status: </strong> 
         <span 
           :class="{
             'text-green-500': internDetails.status === 'completed',
