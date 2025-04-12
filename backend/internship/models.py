@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.hashers import make_password
+from django.db.models import Sum, F
 
 class Intern(models.Model):
     STATUS_CHOICES = [
@@ -25,6 +26,19 @@ class Intern(models.Model):
         # Ensure the password is hashed before saving
         if not self.password.startswith('pbkdf2_'):  # Avoid re-hashing an already hashed password
             self.password = make_password(self.password)
+
+        # Calculate the total work duration from validated attendance logs
+        total_work_duration = Attendance.objects.filter(
+            intern=self, status='validated'
+        ).aggregate(total_duration=Sum(F('work_duration')))['total_duration'] or 0
+
+        # Update time_rendered with the calculated total work duration
+        self.time_rendered = total_work_duration
+
+        # Check if time_rendered >= time_to_render and update status
+        if self.time_rendered >= self.time_to_render:
+            self.status = 'completed'
+
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -44,7 +58,15 @@ class Attendance(models.Model):
     time_out = models.DateTimeField(null=True, blank=True)  # Allow null if the intern hasn't clocked out yet
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='ongoing')  # New status field
     remarks = models.CharField(max_length=255, blank=True, null=True)  # Optional remarks field
+    work_duration = models.DurationField(default="0:00:00")  # Tracks time already rendered
 
+    def save(self, *args, **kwargs):
+        # Call the parent save method
+        super().save(*args, **kwargs)
+
+        # Update the associated intern's time_rendered and status
+        if self.intern:
+            self.intern.save()  # This will trigger the Intern's save method to recalculate time_rendered
 
     def __str__(self):
         return f"Attendance for {self.intern.full_name} on {self.time_in.date()}"

@@ -7,8 +7,7 @@ from rest_framework_simplejwt.views import (
 
 urlpatterns = [
     path('intern/login', views.intern_login, name='intern_login'),
-    path('intern/profile', views.intern_profile, name='intern_profile'),
-    path('intern/attendance', views.attendance_logs, name='attendance_logs'),
+    path('intern/profile', views.intern_profile_with_logs, name='intern_profile'),
     path('intern/attendance/f2f', views.log_face_to_face_attendance, name='log_face_to_face_attendance'),
     path('intern/attendance/async', views.log_asynchronous_attendance, name='log_asynchronous_attendance'),
     path('intern/attendance/log/<int:log_id>/', views.attendance_log_details, name='attendance_log_details'),

@@ -69,7 +69,14 @@ def admin_profile(request):
 @user_passes_test(lambda u: u.is_superuser)  # Ensure only admins can access
 def manage_interns(request):
     if request.method == 'GET':
-        interns = Intern.objects.all().values('id', 'full_name', 'email', 'start_date', 'time_to_render')
+        interns = Intern.objects.all().values(
+            'id', 
+            'full_name', 
+            'email', 
+            'start_date', 
+            'time_to_render', 
+            'status'  # Include the status field
+        )
         return JsonResponse(list(interns), safe=False)
     elif request.method == 'POST':
         data = request.data
@@ -97,7 +104,8 @@ def get_intern_details(request, intern_id):
             'type',
             'time_in',
             'time_out',
-            'status'
+            'status',
+            'work_duration',  # Include work_duration
         )
 
         # Format attendance logs for the response
@@ -110,9 +118,8 @@ def get_intern_details(request, intern_id):
                 'time_in': format(localtime(log['time_in']), 'H:i:s'),
                 'time_out': format(localtime(log['time_out']), 'H:i:s') if log['time_out'] else None,
                 'status': log['status'],
+                'work_duration': log['work_duration'].total_seconds() / 3600 if log['work_duration'] else 0,  # Convert to hours
             })
-
-        print('time_to_render:', intern.time_to_render)
 
         # Return all details except the password
         intern_data = {
@@ -122,75 +129,10 @@ def get_intern_details(request, intern_id):
             'start_date': intern.start_date,
             'time_to_render': intern.time_to_render.total_seconds() / 3600,  # Convert timedelta to hours
             'time_rendered': intern.time_rendered.total_seconds() / 3600 if intern.time_rendered else 0,  # Convert timedelta to hours
-            'status': intern.status,  # Assuming a status field exists
-            'attendance_logs': formatted_logs,  # Include attendance logs
+            'status': intern.status,
+            'attendance_logs': formatted_logs,
         }
         return JsonResponse(intern_data, safe=False)
-    except Intern.DoesNotExist:
-        return JsonResponse({'message': 'Intern not found'}, status=404)
-    except Exception as e:
-        return JsonResponse({'message': str(e)}, status=400)
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-@authentication_classes([InternJWTAuthentication, SessionAuthentication])
-def intern_profile(request):
-    try:
-        # Extract the email from the JWT token
-        jwt_auth = JWTAuthentication()
-        validated_token = jwt_auth.get_validated_token(request.headers.get('Authorization').split()[1])
-        email = validated_token.get('email')
-
-        # Retrieve the intern using the email
-        intern = Intern.objects.get(email=email)
-        return JsonResponse({
-            'email': intern.email,
-            'full_name': intern.full_name,
-        })
-    except Intern.DoesNotExist:
-        return JsonResponse({'message': 'Intern not found'}, status=404)
-    except Exception as e:
-        return JsonResponse({'message': str(e)}, status=400)
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-@authentication_classes([InternJWTAuthentication, SessionAuthentication])
-def attendance_logs(request):
-    try:
-        # Extract the email from the JWT token
-        jwt_auth = JWTAuthentication()
-        validated_token = jwt_auth.get_validated_token(request.headers.get('Authorization').split()[1])
-        email = validated_token.get('email')
-
-        # Retrieve the intern using the email
-        intern = Intern.objects.get(email=email)
-
-        # Retrieve and order attendance logs (most recent first)
-        logs = Attendance.objects.filter(intern=intern).order_by('-time_in').prefetch_related('tasks').values(
-            'id', 
-            'type',  # Include the type field
-            'time_in', 
-            'time_out',
-            'status',  # Include the status field
-        )
-
-        # Format the logs for frontend consumption
-        formatted_logs = []
-        for log in logs:
-            # Retrieve tasks associated with the attendance log
-            tasks = Task.objects.filter(attendance=log['id']).values('id', 'description', 'remarks')
-            formatted_logs.append({
-                'id': log['id'],
-                'type': log['type'],  # Add type to the response
-                'date': format(localtime(log['time_in']), 'Y-m-d'),
-                'time_in': format(localtime(log['time_in']), 'H:i:s'),
-                'time_out': format(localtime(log['time_out']), 'H:i:s') if log['time_out'] else None,
-                'status': log['status'],  # Add status to the response
-                'tasks': list(tasks),  # Include tasks in the response
-                'intern_email': intern.email,  # Include intern email for filtering
-            })
-
-        return JsonResponse(formatted_logs, safe=False)
     except Intern.DoesNotExist:
         return JsonResponse({'message': 'Intern not found'}, status=404)
     except Exception as e:
@@ -286,7 +228,7 @@ def attendance_log_details(request, log_id):
         # Retrieve the specific attendance log and ensure it belongs to the logged-in intern
         attendance = Attendance.objects.get(id=log_id, intern=intern)
 
-        # Retrieve associated tasks
+# Retrieve associated tasks
         tasks = attendance.tasks.all()
         tasks_data = []
         for task in tasks:
@@ -302,11 +244,13 @@ def attendance_log_details(request, log_id):
         response_data = {
             'id': attendance.id,
             'type': attendance.type,
-            'status': attendance.status,  # Include status in the response
+            'status': attendance.status,
             'date': format(localtime(attendance.time_in), 'Y-m-d'),
             'time_in': format(localtime(attendance.time_in), 'H:i:s'),
             'time_out': format(localtime(attendance.time_out), 'H:i:s') if attendance.time_out else None,
             'tasks': tasks_data,
+            'remarks': attendance.remarks,
+            'work_duration': attendance.work_duration.total_seconds() / 3600 if attendance.work_duration else 0,  # Convert to hours
         }
 
         return JsonResponse(response_data)
@@ -374,7 +318,7 @@ def get_intern_attendance(request, log_id):
         # Retrieve the specific attendance log
         attendance = Attendance.objects.get(id=log_id)
 
-        # Retrieve associated tasks
+# Retrieve associated tasks
         tasks = attendance.tasks.all()
         tasks_data = []
         for task in tasks:
@@ -390,12 +334,12 @@ def get_intern_attendance(request, log_id):
         response_data = {
             'id': attendance.id,
             'type': attendance.type,
-            'status': attendance.status,  # Include status in the response
-            'remarks': attendance.remarks,  # Include remarks in the response
+            'status': attendance.status,
+            'remarks': attendance.remarks,
             'date': format(localtime(attendance.time_in), 'Y-m-d'),
             'time_in': format(localtime(attendance.time_in), 'H:i:s'),
             'time_out': format(localtime(attendance.time_out), 'H:i:s') if attendance.time_out else None,
-            'tasks': tasks_data,
+            'work_duration': attendance.work_duration.total_seconds() / 3600 if attendance.work_duration else 0,  # Convert to hours
         }
 
         return JsonResponse(response_data)
@@ -433,9 +377,7 @@ def attendance_feedback(request, log_id):
         # If feedback type is "Validate", calculate duration and update intern's time_rendered
         if feedback_type == 'Validate' and attendance.time_out:
             duration = attendance.time_out - attendance.time_in
-            intern = attendance.intern
-            intern.time_rendered += duration
-            intern.save()
+            attendance.work_duration = duration  # Update work_duration field
 
         attendance.save()
 
@@ -467,9 +409,7 @@ def evaluate_attendance(request, log_id):
             return JsonResponse({'message': 'Invalid duration value.'}, status=400)
 
         # Update intern's time_rendered
-        intern = attendance.intern
-        intern.time_rendered += timedelta(seconds=float(duration))
-        intern.save()
+        attendance.work_duration = timedelta(seconds=float(duration))
 
         # Update attendance log
         attendance.remarks = remarks
@@ -479,5 +419,58 @@ def evaluate_attendance(request, log_id):
         return JsonResponse({'message': 'Attendance evaluated successfully.'}, status=200)
     except Attendance.DoesNotExist:
         return JsonResponse({'message': 'Attendance log not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'message': str(e)}, status=400)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([InternJWTAuthentication, SessionAuthentication])
+def intern_profile_with_logs(request):
+    try:
+        # Extract the email from the JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(request.headers.get('Authorization').split()[1])
+        email = validated_token.get('email')
+
+        # Retrieve the intern using the email
+        intern = Intern.objects.get(email=email)
+
+        # Retrieve and order attendance logs (most recent first)
+        logs = Attendance.objects.filter(intern=intern).order_by('-time_in').prefetch_related('tasks').values(
+            'id', 
+            'type',  
+            'time_in', 
+            'time_out',
+            'status',  
+            'work_duration',  # Include work_duration
+        )
+
+        # Format the logs for frontend consumption
+        formatted_logs = []
+        for log in logs:
+            formatted_logs.append({
+                'id': log['id'],
+                'type': log['type'],
+                'date': format(localtime(log['time_in']), 'Y-m-d'),
+                'time_in': format(localtime(log['time_in']), 'H:i:s'),
+                'time_out': format(localtime(log['time_out']), 'H:i:s') if log['time_out'] else None,
+                'status': log['status'],
+                'work_duration': log['work_duration'].total_seconds() / 3600 if log['work_duration'] else 0,  # Convert to hours
+            })
+
+        # Combine intern details and attendance logs
+        response_data = {
+            'email': intern.email,
+            'full_name': intern.full_name,
+            'start_date': intern.start_date,
+            'time_to_render': intern.time_to_render.total_seconds() / 3600,  # Convert timedelta to hours
+            'time_rendered': intern.time_rendered.total_seconds() / 3600 if intern.time_rendered else 0,  # Convert timedelta to hours
+            'status': intern.status,
+            'attendance_logs': formatted_logs,
+        }
+
+        return JsonResponse(response_data, safe=False)
+    except Intern.DoesNotExist:
+        return JsonResponse({'message': 'Intern not found'}, status=404)
     except Exception as e:
         return JsonResponse({'message': str(e)}, status=400)

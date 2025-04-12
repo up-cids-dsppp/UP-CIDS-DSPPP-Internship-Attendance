@@ -75,9 +75,20 @@ const goBack = () => {
       <p class="mt-2"><strong>Full Name:</strong> {{ internDetails.full_name }}</p>
       <p class="mt-2"><strong>Email:</strong> {{ internDetails.email }}</p>
       <p class="mt-2"><strong>Start Date:</strong> {{ internDetails.start_date }}</p>
-      <p class="mt-2"><strong>Time to be Rendered:</strong> {{ internDetails.time_to_render }} hours</p>
-      <p class="mt-2"><strong>Time Rendered:</strong> {{ internDetails.time_rendered }} hours</p>
-      <p class="mt-2"><strong>Status:</strong> {{ internDetails.status }}</p>
+      <p class="mt-2"><strong>Time to be Rendered:</strong> {{ internDetails.time_to_render.toFixed(2) }} hours</p>
+      <p class="mt-2"><strong>Time Rendered:</strong> {{ internDetails.time_rendered.toFixed(2) }} hours</p>
+      <p class="mt-2">
+        <strong>Status:</strong> 
+        <span 
+          :class="{
+            'text-green-500': internDetails.status === 'completed',
+            'text-black': internDetails.status === 'ongoing',
+            'text-red-500': internDetails.status === 'dropped',
+          }"
+        >
+          {{ internDetails.status }}
+        </span>
+      </p>
 
       <!-- Attendance Logs Section -->
       <h2 class="text-xl font-bold mt-8">Attendance Logs</h2>
@@ -91,6 +102,7 @@ const goBack = () => {
             <th class="border border-gray-300 px-4 py-2">Type</th>
             <th class="border border-gray-300 px-4 py-2">Time In</th>
             <th class="border border-gray-300 px-4 py-2">Time Out</th>
+            <th class="border border-gray-300 px-4 py-2">Work Duration (hours)</th>
             <th class="border border-gray-300 px-4 py-2">Status</th>
             <th class="border border-gray-300 px-4 py-2">Actions</th>
           </tr>
@@ -111,6 +123,7 @@ const goBack = () => {
             <td class="border border-gray-300 px-4 py-2">{{ log.type }}</td>
             <td class="border border-gray-300 px-4 py-2">{{ log.time_in }}</td>
             <td class="border border-gray-300 px-4 py-2">{{ log.time_out || 'N/A' }}</td>
+            <td class="border border-gray-300 px-4 py-2">{{ (log.work_duration || 0).toFixed(2) }}</td>
             <td class="border border-gray-300 px-4 py-2">{{ log.status }}</td>
             <td class="border border-gray-300 px-4 py-2">
               <button 

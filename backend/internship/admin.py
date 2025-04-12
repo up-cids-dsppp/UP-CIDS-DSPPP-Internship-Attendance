@@ -7,7 +7,7 @@ class InternAdmin(admin.ModelAdmin):
 
 @admin.register(Attendance)
 class AttendanceAdmin(admin.ModelAdmin):
-    list_display = ('intern', 'type', 'time_in', 'time_out', 'status')
+    list_display = ('intern', 'type', 'time_in', 'time_out', 'status', 'work_duration')
     list_filter = ('type', 'status')
     search_fields = ('intern__full_name', 'intern__email')
 

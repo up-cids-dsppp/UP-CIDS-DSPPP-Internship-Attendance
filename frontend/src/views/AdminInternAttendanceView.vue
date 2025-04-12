@@ -34,17 +34,21 @@ onMounted(async () => {
     const response = await axios.get(`/admin/interns/attendance/${logId}/`)
     attendanceLog.value = response.data
 
-    // Log each task and its images for debugging
-    attendanceLog.value.tasks.forEach(task => {
-      console.log(`Task ID: ${task.id}, Description: ${task.description}`)
-      if (task.images && task.images.length > 0) {
-        task.images.forEach(image => {
-          console.log(`Image ID: ${image.id}, File URL: ${image.file}`)
-        })
-      } else {
-        console.log(`Task ID: ${task.id} has no images.`)
-      }
-    })
+    // Ensure tasks exist before iterating
+    if (attendanceLog.value.tasks && attendanceLog.value.tasks.length > 0) {
+      attendanceLog.value.tasks.forEach(task => {
+        console.log(`Task ID: ${task.id}, Description: ${task.description}`)
+        if (task.images && task.images.length > 0) {
+          task.images.forEach(image => {
+            console.log(`Image ID: ${image.id}, File URL: ${image.file}`)
+          })
+        } else {
+          console.log(`Task ID: ${task.id} has no images.`)
+        }
+      })
+    } else {
+      console.log('No tasks available for this attendance log.')
+    }
 
     if (attendanceLog.value.time_in && attendanceLog.value.time_out) {
       const timeIn = new Date(attendanceLog.value.time_in)
@@ -182,6 +186,7 @@ const getStatusColor = (status) => {
       </p>
       <p><strong>Time In: </strong>{{ attendanceLog.time_in }}</p>
       <p><strong>Time Out: </strong>{{ attendanceLog.time_out || 'N/A' }}</p>
+      <p><strong>Work Duration: </strong>{{ (attendanceLog.work_duration || 0).toFixed(2) }} hours</p>
       <p><strong>Remarks: </strong>{{ attendanceLog.remarks || 'N/A' }}</p>
 
       <!-- Tasks Header -->

@@ -84,6 +84,7 @@ const getStatusColor = (status) => {
       </p>
       <p><strong>Time In: </strong>{{ attendanceLog.time_in }}</p>
       <p><strong>Time Out: </strong>{{ attendanceLog.time_out || 'N/A' }}</p>
+      <p><strong>Work Duration: </strong>{{ (attendanceLog.work_duration || 0).toFixed(2) }} hours</p>
       <p><strong>Remarks: </strong>{{ attendanceLog.remarks || 'N/A' }}</p>
       <h2 class="text-xl font-semibold mt-4">Tasks</h2>
       <div v-if="attendanceLog.tasks.length">

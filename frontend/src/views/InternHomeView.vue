@@ -9,16 +9,22 @@ const router = useRouter()
 const timeInOutStore = useTimeInOutStore() // Use the Pinia store
 
 // Intern details
-const internEmail = ref('') // Intern email
-const internFullName = ref('') // Intern full name
-
-// Date and time
-const currentDate = ref(new Date().toLocaleDateString())
-const currentTime = ref(new Date().toLocaleTimeString())
+const internDetails = ref({
+  email: '',
+  full_name: '',
+  start_date: '',
+  time_to_render: 0,
+  time_rendered: 0,
+  status: '',
+})
 
 // Attendance logs
 const attendanceLogs = ref([]) // Array to store attendance logs
 const mostRecentAttendance = ref(null) // Tracks the most recent attendance log
+
+// Date and time
+const currentDate = ref(new Date().toLocaleDateString())
+const currentTime = ref(new Date().toLocaleTimeString())
 
 // Update the clock every second
 const updateClock = () => {
@@ -29,14 +35,22 @@ setInterval(updateClock, 1000)
 // Fetch intern details and attendance logs on component mount
 onMounted(async () => {
   try {
-    // Fetch intern details
-    const profileResponse = await axios.get('/intern/profile') // Replace with the correct endpoint
-    internEmail.value = profileResponse.data.email
-    internFullName.value = profileResponse.data.full_name
+    // Fetch intern profile with logs
+    const profileResponse = await axios.get('/intern/profile') // Fetch from the combined endpoint
+    const data = profileResponse.data
 
-    // Fetch attendance logs for the logged-in intern
-    const logsResponse = await axios.get('/intern/attendance') // Replace with the correct endpoint
-    attendanceLogs.value = logsResponse.data.filter(log => log.intern_email === internEmail.value) // Filter logs by email
+    // Set intern details
+    internDetails.value = {
+      email: data.email,
+      full_name: data.full_name,
+      start_date: data.start_date,
+      time_to_render: data.time_to_render,
+      time_rendered: data.time_rendered,
+      status: data.status,
+    }
+
+    // Set attendance logs
+    attendanceLogs.value = data.attendance_logs
 
     // Determine the most recent attendance
     if (attendanceLogs.value.length > 0) {
@@ -78,11 +92,16 @@ const viewAttendanceLog = (logId) => {
 <template>
   <div>
     <!-- Navbar Component -->
-    <NavBar userType="intern" :userEmail="internEmail" />
+    <NavBar userType="intern" :userEmail="internDetails.email" />
 
     <!-- Intern Content -->
     <div class="mt-8 px-6">
-      <h2 class="text-xl font-bold">Welcome, {{ internFullName }}!</h2>
+      <h2 class="text-xl font-bold">Welcome, {{ internDetails.full_name }}!</h2>
+      <p class="mt-2"><strong>Email:</strong> {{ internDetails.email }}</p>
+      <p class="mt-2"><strong>Start Date:</strong> {{ internDetails.start_date }}</p>
+      <p class="mt-2"><strong>Time to be Rendered:</strong> {{ internDetails.time_to_render.toFixed(2) }} hours</p>
+      <p class="mt-2"><strong>Time Rendered:</strong> {{ internDetails.time_rendered.toFixed(2) }} hours</p>
+      <p class="mt-2"><strong>Status:</strong> {{ internDetails.status }}</p>
 
       <!-- Time In/Out Section -->
       <div
@@ -126,6 +145,7 @@ const viewAttendanceLog = (logId) => {
             <th class="border border-gray-300 px-4 py-2">Type</th>
             <th class="border border-gray-300 px-4 py-2">Time In</th>
             <th class="border border-gray-300 px-4 py-2">Time Out</th>
+            <th class="border border-gray-300 px-4 py-2">Work Duration (hours)</th>
             <th class="border border-gray-300 px-4 py-2">Actions</th>
           </tr>
         </thead>
@@ -145,6 +165,7 @@ const viewAttendanceLog = (logId) => {
             <td class="border border-gray-300 px-4 py-2">{{ log.type }}</td>
             <td class="border border-gray-300 px-4 py-2">{{ log.time_in }}</td>
             <td class="border border-gray-300 px-4 py-2">{{ log.time_out || 'N/A' }}</td>
+            <td class="border border-gray-300 px-4 py-2">{{ (log.work_duration || 0).toFixed(2) }}</td>
             <td class="border border-gray-300 px-4 py-2">
               <button 
                 @click="viewAttendanceLog(log.id)" 
