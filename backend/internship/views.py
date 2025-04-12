@@ -158,7 +158,7 @@ def log_face_to_face_attendance(request):
         # Create a new Task
         task = Task.objects.create(
             description="face to face - in",
-            remarks="present"
+            intern_remarks="present"
         )
 
         # Create a new Image tied to the Task
@@ -236,7 +236,7 @@ def attendance_log_details(request, log_id):
             tasks_data.append({
                 'id': task.id,
                 'description': task.description,
-                'remarks': task.remarks,
+                'intern_remarks': task.intern_remarks,
                 'images': list(images),
             })
 
@@ -249,7 +249,7 @@ def attendance_log_details(request, log_id):
             'time_in': format(localtime(attendance.time_in), 'H:i:s'),
             'time_out': format(localtime(attendance.time_out), 'H:i:s') if attendance.time_out else None,
             'tasks': tasks_data,
-            'remarks': attendance.remarks,
+            'admin_remarks': attendance.admin_remarks,
             'work_duration': attendance.work_duration.total_seconds() / 3600 if attendance.work_duration else 0,  # Convert to hours
         }
 
@@ -279,14 +279,14 @@ def submit_timeout(request, log_id):
         tasks_data = request.POST  # Form data for remarks
         files = request.FILES  # Uploaded files
 
-        for task_id, remarks in tasks_data.items():
-            if task_id.startswith('tasks[') and task_id.endswith('][remarks]'):
+        for task_id, intern_remarks in tasks_data.items():
+            if task_id.startswith('tasks[') and task_id.endswith('][intern_remarks]'):
                 # Extract the task ID
                 task_id = int(task_id.split('[')[1].split(']')[0])
 
                 # Update the task
                 task = Task.objects.get(id=task_id, attendance=attendance)
-                task.remarks = remarks
+                task.intern_remarks = intern_remarks
                 task.save()
 
                 # Save uploaded images for the task
@@ -326,7 +326,7 @@ def get_intern_attendance(request, log_id):
             tasks_data.append({
                 'id': task.id,
                 'description': task.description,
-                'remarks': task.remarks,
+                'intern_remarks': task.intern_remarks,
                 'images': list(images),
             })
 
@@ -335,7 +335,7 @@ def get_intern_attendance(request, log_id):
             'id': attendance.id,
             'type': attendance.type,
             'status': attendance.status,
-            'remarks': attendance.remarks,
+            'admin_remarks': attendance.admin_remarks,
             'date': format(localtime(attendance.time_in), 'Y-m-d'),
             'time_in': format(localtime(attendance.time_in), 'H:i:s'),
             'time_out': format(localtime(attendance.time_out), 'H:i:s') if attendance.time_out else None,
@@ -358,7 +358,7 @@ def attendance_feedback(request, log_id):
 
         # Extract feedback data from the request
         feedback_type = request.data.get('type')
-        feedback_remarks = request.data.get('remarks')
+        feedback_remarks = request.data.get('admin_remarks')
 
         # Validate the feedback data
         if not feedback_type or not feedback_remarks:
@@ -372,7 +372,7 @@ def attendance_feedback(request, log_id):
 
         # Update the attendance log
         attendance.status = status_mapping.get(feedback_type, attendance.status)  # Default to current status if type is invalid
-        attendance.remarks = feedback_remarks  # Update the remarks field
+        attendance.admin_remarks = feedback_remarks  # Update the remarks field
 
         # If feedback type is "Validate", calculate duration and update intern's time_rendered
         if feedback_type == 'Validate' and attendance.time_out:
@@ -397,10 +397,10 @@ def evaluate_attendance(request, log_id):
 
         # Extract evaluation data from the request
         duration = request.data.get('duration')
-        remarks = request.data.get('remarks')
+        admin_remarks = request.data.get('admin_remarks')
 
         # Validate inputs
-        if duration is None or remarks is None:
+        if duration is None or admin_remarks is None:
             return JsonResponse({'message': 'Duration and remarks are required.'}, status=400)
 
         # Ensure duration is within valid range
@@ -412,7 +412,7 @@ def evaluate_attendance(request, log_id):
         attendance.work_duration = timedelta(seconds=float(duration))
 
         # Update attendance log
-        attendance.remarks = remarks
+        attendance.admin_remarks = admin_remarks
         attendance.status = 'validated'
         attendance.save()
 

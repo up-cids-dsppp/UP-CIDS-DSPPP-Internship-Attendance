@@ -111,7 +111,7 @@ const submitEvaluation = async () => {
   try {
     await axios.post(`/admin/interns/attendance/${logId}/evaluate`, {
       duration: evaluationDuration.value,
-      remarks: evaluationRemarks.value,
+      admin_remarks: evaluationRemarks.value,
     })
     alert('Attendance evaluated successfully!')
     evaluationModal.value = false // Close modal
@@ -187,7 +187,7 @@ const getStatusColor = (status) => {
       <p><strong>Time In: </strong>{{ attendanceLog.time_in }}</p>
       <p><strong>Time Out: </strong>{{ attendanceLog.time_out || 'N/A' }}</p>
       <p><strong>Work Duration: </strong>{{ (attendanceLog.work_duration || 0).toFixed(2) }} hours</p>
-      <p><strong>Remarks: </strong>{{ attendanceLog.remarks || 'N/A' }}</p>
+      <p><strong>Admin Remarks: </strong>{{ attendanceLog.admin_remarks || 'N/A' }}</p>
 
       <!-- Tasks Header -->
       <h2 class="text-xl font-semibold mt-4">Tasks</h2>

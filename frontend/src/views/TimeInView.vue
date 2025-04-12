@@ -95,7 +95,7 @@ const submitForm = async () => {
       await axios.post('/intern/attendance/f2f', {
         type: 'f2f',
         faceScreenshot: faceScreenshot.value,
-        remarks: 'present',
+        intern_remarks: 'present',
       })
     }
 

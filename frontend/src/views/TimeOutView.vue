@@ -29,7 +29,7 @@ onMounted(async () => {
       id: task.id,
       description: task.description,
       images: [],
-      remarks: '',
+      intern_remarks: '',
       imagePreviews: [], // Initialize imagePreviews as an empty array
     })))
   } catch (error) {
@@ -67,7 +67,7 @@ const handleSubmit = async () => {
   // Prepare form data
   const formData = new FormData()
   tasks.forEach(task => {
-    formData.append(`tasks[${task.id}][remarks]`, task.remarks)
+    formData.append(`tasks[${task.id}][intern_remarks]`, task.intern_remarks)
     task.images.forEach((image, index) => {
       formData.append(`tasks[${task.id}][images][${index}]`, image) // Append the actual file objects
     })
@@ -158,7 +158,7 @@ onUnmounted(() => {
           <div class="mt-4">
             <p><strong>Remarks:</strong></p>
             <textarea
-              v-model="task.remarks"
+              v-model="task.intern_remarks"
               rows="3"
               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
               placeholder="Enter remarks for this task"

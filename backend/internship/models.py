@@ -8,6 +8,7 @@ class Intern(models.Model):
         ('completed', 'Completed'),
         ('ongoing', 'Ongoing'),
         ('dropped', 'Dropped'),
+        ('passed', 'Passed'),
     ]
 
     email = models.EmailField(unique=True, max_length=255)
@@ -17,6 +18,7 @@ class Intern(models.Model):
     time_to_render = models.DurationField()  # Represents the total time to render (e.g., internship duration)
     time_rendered = models.DurationField(default=timedelta(seconds=0))  # Tracks time already rendered
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='ongoing')  # New status field
+    admin_remarks = models.CharField(max_length=255, blank=True, null=True)  # Optional remarks field
 
     @property
     def is_authenticated(self):
@@ -38,7 +40,7 @@ class Intern(models.Model):
 
         # Check if time_rendered >= time_to_render and update status
         if self.time_rendered >= self.time_to_render:
-            self.status = 'completed'
+            self.status = 'passed'
         elif self.status != 'dropped':
             self.status = 'ongoing'
 
@@ -60,7 +62,7 @@ class Attendance(models.Model):
     time_in = models.DateTimeField()
     time_out = models.DateTimeField(null=True, blank=True)  # Allow null if the intern hasn't clocked out yet
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='ongoing')  # New status field
-    remarks = models.CharField(max_length=255, blank=True, null=True)  # Optional remarks field
+    admin_remarks = models.CharField(max_length=255, blank=True, null=True)  # Optional remarks field
     work_duration = models.DurationField(default="0:00:00")  # Tracks time already rendered
 
     def save(self, *args, **kwargs):
@@ -77,7 +79,7 @@ class Attendance(models.Model):
 class Task(models.Model):
     attendance = models.ForeignKey(Attendance, on_delete=models.CASCADE, related_name="tasks", null=True)  # Many-to-one relationship with Task
     description = models.TextField()
-    remarks = models.CharField(max_length=255, blank=True, null=True)  # Optional remarks field
+    intern_remarks = models.CharField(max_length=255, blank=True, null=True)  # Optional remarks field
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
