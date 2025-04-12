@@ -87,9 +87,9 @@ const router = createRouter({
 })
 
 // Add a global navigation guard
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
-  const timeInOutStore = useTimeInOutStore() // Access the Pinia store
+  const timeInOutStore = useTimeInOutStore()
 
   // Check if the user is logged in
   if (authStore.accessToken) {
@@ -110,17 +110,7 @@ router.beforeEach((to, from, next) => {
       return next('/intern/home') // Redirect to intern home if not timed in
     }
 
-    // Allow access to admin-only routes for admins
-    if (to.path.startsWith('/admin') && to.path !== '/admin/login' && authStore.userType !== 'admin') {
-      return next('/unauthorized') // Redirect to unauthorized page
-    }
-
-    // Allow access to intern-only routes for interns
-    if (to.path.startsWith('/intern') && to.path !== '/intern/login' && authStore.userType !== 'intern') {
-      return next('/unauthorized') // Redirect to unauthorized page
-    }
-
-    // Allow navigation to the requested route
+    // Other route restrictions...
     return next()
   }
 

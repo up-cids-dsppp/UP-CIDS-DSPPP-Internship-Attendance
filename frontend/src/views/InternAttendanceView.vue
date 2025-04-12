@@ -38,7 +38,12 @@ onMounted(async () => {
       }
     })
   } catch (error) {
-    console.error('Failed to fetch attendance log:', error)
+    if (error.response && error.response.status === 403) {
+      // Redirect to unauthorized page if access is forbidden
+      router.push('/unauthorized')
+    } else {
+      console.error('Failed to fetch attendance log:', error)
+    }
   }
 })
 

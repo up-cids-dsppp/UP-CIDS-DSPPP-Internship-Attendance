@@ -1,10 +1,17 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
+import { useAuthStore } from './auth'
 
 export const useTimeInOutStore = defineStore('timeInOut', () => {
+  const authStore = useAuthStore()
+  const currentUserEmail = authStore.userEmail // Get the logged-in user's email
+
+  // Helper function to get the key for localStorage
+  const getStorageKey = (key) => `${currentUserEmail}_${key}`
+
   // Load initial state from localStorage
-  const isTimedIn = ref(JSON.parse(localStorage.getItem('isTimedIn')) || false) // Tracks if the intern is timed in
-  const tasksForTheDay = ref(JSON.parse(localStorage.getItem('tasksForTheDay')) || 0) // Tracks the number of tasks for the day
+  const isTimedIn = ref(JSON.parse(localStorage.getItem(getStorageKey('isTimedIn'))) || false)
+  const tasksForTheDay = ref(JSON.parse(localStorage.getItem(getStorageKey('tasksForTheDay'))) || 0)
 
   // Actions to update the state
   function setTimedIn(status) {
@@ -17,11 +24,11 @@ export const useTimeInOutStore = defineStore('timeInOut', () => {
 
   // Persist state to localStorage whenever it changes
   watch(isTimedIn, (newValue) => {
-    localStorage.setItem('isTimedIn', JSON.stringify(newValue))
+    localStorage.setItem(getStorageKey('isTimedIn'), JSON.stringify(newValue))
   })
 
   watch(tasksForTheDay, (newValue) => {
-    localStorage.setItem('tasksForTheDay', JSON.stringify(newValue))
+    localStorage.setItem(getStorageKey('tasksForTheDay'), JSON.stringify(newValue))
   })
 
   return {

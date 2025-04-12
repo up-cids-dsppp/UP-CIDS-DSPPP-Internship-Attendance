@@ -187,6 +187,7 @@ def attendance_logs(request):
                 'time_out': format(localtime(log['time_out']), 'H:i:s') if log['time_out'] else None,
                 'status': log['status'],  # Add status to the response
                 'tasks': list(tasks),  # Include tasks in the response
+                'intern_email': intern.email,  # Include intern email for filtering
             })
 
         return JsonResponse(formatted_logs, safe=False)
@@ -282,7 +283,7 @@ def attendance_log_details(request, log_id):
         # Retrieve the intern using the email
         intern = Intern.objects.get(email=email)
 
-        # Retrieve the specific attendance log
+        # Retrieve the specific attendance log and ensure it belongs to the logged-in intern
         attendance = Attendance.objects.get(id=log_id, intern=intern)
 
         # Retrieve associated tasks
@@ -310,7 +311,7 @@ def attendance_log_details(request, log_id):
 
         return JsonResponse(response_data)
     except Attendance.DoesNotExist:
-        return JsonResponse({'message': 'Attendance log not found'}, status=404)
+        return JsonResponse({'message': 'Attendance log not found or unauthorized access'}, status=403)
     except Exception as e:
         return JsonResponse({'message': str(e)}, status=400)
 

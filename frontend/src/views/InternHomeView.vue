@@ -34,9 +34,9 @@ onMounted(async () => {
     internEmail.value = profileResponse.data.email
     internFullName.value = profileResponse.data.full_name
 
-    // Fetch attendance logs
+    // Fetch attendance logs for the logged-in intern
     const logsResponse = await axios.get('/intern/attendance') // Replace with the correct endpoint
-    attendanceLogs.value = logsResponse.data // Assume the API returns an array of logs
+    attendanceLogs.value = logsResponse.data.filter(log => log.intern_email === internEmail.value) // Filter logs by email
 
     // Determine the most recent attendance
     if (attendanceLogs.value.length > 0) {
@@ -48,6 +48,10 @@ onMounted(async () => {
       // Compute tasks for the day from the tasks array
       const tasks = mostRecentAttendance.value.tasks || []
       timeInOutStore.setTasksForTheDay(Array.isArray(tasks) ? tasks.length : 0)
+    } else {
+      // Reset the store if no attendance logs are found
+      timeInOutStore.setTimedIn(false)
+      timeInOutStore.setTasksForTheDay(0)
     }
   } catch (error) {
     console.error('Failed to fetch data:', error)
