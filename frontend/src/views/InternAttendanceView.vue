@@ -12,7 +12,7 @@ const attendanceLog = ref(null) // Store the attendance log details
 const internEmail = ref('') // Intern email
 
 const goBack = () => {
-  router.back() // Navigates to the previous page
+  router.push('/intern/home') // Navigates to the previous page
 }
 
 // Fetch the attendance log details when the component is mounted

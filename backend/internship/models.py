@@ -30,6 +30,9 @@ class Intern(models.Model):
         if not self.password.startswith('pbkdf2_'):  # Avoid re-hashing an already hashed password
             self.password = make_password(self.password)
 
+        # Save the instance first to ensure it has a primary key
+        super().save(*args, **kwargs)
+
         # Calculate the total work duration from validated attendance logs
         total_work_duration = Attendance.objects.filter(
             intern=self, status='validated'
@@ -39,12 +42,15 @@ class Intern(models.Model):
         self.time_rendered = total_work_duration
 
         # Check if time_rendered >= time_to_render and update status
-        if self.time_rendered >= self.time_to_render:
-            self.status = 'passed'
-        elif self.status != 'dropped':
-            self.status = 'ongoing'
+        # Only update status if it is not explicitly set to 'completed' or 'dropped'
+        if self.status not in ['completed', 'dropped']:
+            if self.time_rendered >= self.time_to_render:
+                self.status = 'passed'
+            else:
+                self.status = 'ongoing'
 
-        super().save(*args, **kwargs)
+        # Save the instance again to persist the updated fields
+        super().save(update_fields=['time_rendered', 'status'])
 
     def __str__(self):
         return self.full_name
@@ -56,9 +62,13 @@ class Attendance(models.Model):
         ('flagged', 'Flagged'),
         ('sent', 'Sent'),
     ]
+    TYPE_CHOICES = [
+        ('f2f', 'F2f'),
+        ('async', 'Async'),
+    ]
 
     intern = models.ForeignKey(Intern, on_delete=models.CASCADE, related_name="attendance", null=True)  # Connect to Intern table
-    type = models.CharField(max_length=255, default="f2f")
+    type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='f2f')  # New type field
     time_in = models.DateTimeField()
     time_out = models.DateTimeField(null=True, blank=True)  # Allow null if the intern hasn't clocked out yet
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='ongoing')  # New status field

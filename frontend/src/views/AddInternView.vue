@@ -55,13 +55,7 @@ const handleSubmit = async () => {
 
 // Navigate back to the appropriate page based on user type
 const goBack = () => {
-  if (authStore.userType === 'admin') {
-    router.push('/admin/home') // Redirect to admin home page
-  } else if (authStore.userType === 'intern') {
-    router.push('/intern/home') // Redirect to intern home page
-  } else {
-    router.push('/') // Fallback to the landing page
-  }
+  router.push('/admin/home') // Redirect to admin home page
 }
 </script>
 
@@ -71,6 +65,13 @@ const goBack = () => {
     <NavBar userType="admin" :userEmail="adminEmail" />
 
     <!-- Add Intern Form -->
+     <!-- Back Button -->
+     <p 
+      @click="goBack" 
+      class="mt-4 ml-6 text-gray-500 underline cursor-pointer hover:text-gray-700"
+    >
+      Go back
+    </p>
     <div class="max-w-lg mx-auto mt-8 p-6 bg-white shadow-md rounded-lg">
       <h2 class="text-2xl font-bold mb-4">Add New Intern</h2>
       <form @submit.prevent="handleSubmit" class="flex flex-col gap-4">
@@ -135,14 +136,6 @@ const goBack = () => {
           Add Intern
         </button>
       </form>
-
-      <!-- Back Button -->
-      <p 
-      @click="goBack" 
-      class="mt-4 text-gray-500 underline cursor-pointer hover:text-gray-700"
-    >
-      Go back
-    </p>
     </div>
   </div>
 </template>

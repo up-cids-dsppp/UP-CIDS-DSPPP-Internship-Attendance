@@ -74,7 +74,7 @@ const router = createRouter({
       component: AdminInternProfileView, // Correctly reference the imported component
     },
     {
-      path: '/admin/interns/attendance/:id',
+      path: '/admin/interns/:internId/attendance/:logId',
       name: 'admin_intern_attendance',
       component: AdminInternAttendanceView, // Correctly reference the imported component
     },

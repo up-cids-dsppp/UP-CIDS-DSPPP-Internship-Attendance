@@ -6,9 +6,10 @@ import NavBar from '../components/NavBar.vue'
 
 const router = useRouter()
 const route = useRoute()
+const internId = route.params.id
 
 // Admin details
-const adminEmail = ref('') // Admin email
+const adminEmail = ref('')
 
 // Intern details
 const internDetails = ref({
@@ -18,21 +19,26 @@ const internDetails = ref({
   time_to_render: 0,
   time_rendered: 0,
   status: '',
-}) // Intern details object
+})
 
 // Attendance logs
-const attendanceLogs = ref([]) // Array to store attendance logs
+const attendanceLogs = ref([])
+
+// Modal states
+const showEvaluationModal = ref(false)
+const showUndropModal = ref(false)
+const evaluationType = ref('')
+const evaluationRemarks = ref('')
+const errors = ref({})
+const previousStatus = ref('') // Store the previous status for "Undrop"
 
 // Fetch admin and intern details along with attendance logs on component mount
 onMounted(async () => {
   try {
-    // Fetch admin details
-    const adminResponse = await axios.get('/admin/profile') // Admin profile endpoint
+    const adminResponse = await axios.get('/admin/profile')
     adminEmail.value = adminResponse.data.email
 
-    // Fetch intern details using the dynamic ID from the route
-    const internId = route.params.id // Get the intern ID from the route
-    const profileResponse = await axios.get(`/admin/interns/${internId}`) // New endpoint
+    const profileResponse = await axios.get(`/admin/interns/${internId}`)
     internDetails.value = {
       full_name: profileResponse.data.full_name,
       email: profileResponse.data.email,
@@ -42,35 +48,106 @@ onMounted(async () => {
       status: profileResponse.data.status,
     }
 
-    // Fetch attendance logs for the specific intern
-    attendanceLogs.value = profileResponse.data.attendance_logs // Assume the API returns an array of logs
+    attendanceLogs.value = profileResponse.data.attendance_logs
+    previousStatus.value = profileResponse.data.previous_status || 'ongoing' // Default to "ongoing"
   } catch (error) {
     console.error('Failed to fetch data:', error)
   }
 })
 
-// Handle "View" link click
 const viewAttendanceLog = (logId) => {
-  router.push(`/admin/interns/attendance/${logId}`) // Redirect to the attendance log details page
+  router.push(`/admin/interns/${internId}/attendance/${logId}`)
+}
+
+// Handle "Evaluate Intern" form submission
+const submitEvaluation = async () => {
+  errors.value = {}
+
+  // Check if the evaluation type is "completed" and the intern's status is not "passed"
+  if (evaluationType.value === 'completed' && internDetails.value.status !== 'passed') {
+    alert('A "completed" evaluation can only be submitted if the intern has a status of "passed".')
+    return
+  }
+
+  // Validate inputs
+  if (!evaluationType.value) {
+    errors.value.type = 'Evaluation type is required.'
+  }
+  if (!evaluationRemarks.value.trim()) {
+    errors.value.remarks = 'Remarks are required.'
+  }
+
+  if (Object.keys(errors.value).length > 0) {
+    return
+  }
+
+  try {
+    const internId = route.params.id
+    await axios.post(`/admin/interns/${internId}/evaluate`, {
+      evaluation_type: evaluationType.value,
+      admin_remarks: evaluationRemarks.value,
+    })
+    alert('Intern evaluated successfully!')
+    showEvaluationModal.value = false
+    evaluationType.value = ''
+    evaluationRemarks.value = ''
+    location.reload()
+  } catch (error) {
+    console.error('Failed to evaluate intern:', error)
+    alert('Failed to evaluate intern. Please try again.')
+  }
+}
+
+// Handle "Undrop" action
+const undropIntern = async () => {
+  try {
+    const internId = route.params.id
+    await axios.post(`/admin/interns/${internId}/undrop`, {
+      previous_status: previousStatus.value,
+    })
+    alert('Intern status updated successfully!')
+    showUndropModal.value = false
+    location.reload()
+  } catch (error) {
+    console.error('Failed to update intern status:', error)
+    alert('Failed to update intern status. Please try again.')
+  }
 }
 
 const goBack = () => {
-  router.back() // Navigates to the previous page
+  router.push('/admin/home') // Redirect to the interns list page
 }
 </script>
 
 <template>
   <div>
-    <!-- Navbar Component -->
     <NavBar userType="admin" :userEmail="adminEmail" />
-    <!-- Intern Content -->
     <div class="mt-8 px-6">
       <p 
-      @click="goBack" 
-      class="mb-4 text-gray-500 underline cursor-pointer hover:text-gray-700"
-    >
-      Go back
-    </p>
+        @click="goBack" 
+        class="mb-4 text-gray-500 underline cursor-pointer hover:text-gray-700"
+      >
+        Go back
+      </p>
+
+      <!-- Conditional Buttons -->
+      <div class="mb-6">
+        <button 
+          v-if="internDetails.status === 'ongoing' || internDetails.status === 'passed'" 
+          @click="showEvaluationModal = true" 
+          class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+        >
+          Evaluate Intern
+        </button>
+        <button 
+          v-if="internDetails.status === 'dropped'" 
+          @click="showUndropModal = true" 
+          class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
+        >
+          Undrop
+        </button>
+      </div>
+
       <h2 class="text-xl font-bold">Intern Profile</h2>
       <p class="mt-2"><strong>Full Name:</strong> {{ internDetails.full_name }}</p>
       <p class="mt-2"><strong>Email:</strong> {{ internDetails.email }}</p>
@@ -84,11 +161,90 @@ const goBack = () => {
             'text-green-500': internDetails.status === 'completed',
             'text-black': internDetails.status === 'ongoing',
             'text-red-500': internDetails.status === 'dropped',
+            'text-orange-500': internDetails.status === 'passed',
           }"
         >
           {{ internDetails.status }}
         </span>
       </p>
+
+      <!-- Evaluation Modal -->
+      <div 
+        v-if="showEvaluationModal" 
+        class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
+      >
+        <div class="bg-white rounded-lg p-6 w-[600px] relative">
+          <button 
+            @click="showEvaluationModal = false" 
+            class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl"
+          >
+            &times;
+          </button>
+          <h2 class="text-xl font-bold mb-4">Evaluate Intern</h2>
+          <div class="mb-4">
+            <label for="evaluationType" class="block mb-2">Select Evaluation Type:</label>
+            <select
+              id="evaluationType"
+              v-model="evaluationType"
+              class="border rounded px-4 py-2 mb-4 w-full"
+            >
+              <option disabled value="">-- Select --</option>
+              <option value="dropped">Drop</option>
+              <option value="completed">Complete</option>
+            </select>
+            <p v-if="errors.type" class="text-red-500 text-sm mt-1">{{ errors.type }}</p>
+          </div>
+          <div class="mb-4">
+            <label for="evaluationRemarks" class="block font-semibold mb-2">Remarks</label>
+            <textarea 
+              id="evaluationRemarks" 
+              v-model="evaluationRemarks" 
+              class="w-full border border-gray-300 rounded-lg px-3 py-2"
+              rows="6"
+            ></textarea>
+            <p v-if="errors.remarks" class="text-red-500 text-sm mt-1">{{ errors.remarks }}</p>
+          </div>
+          <div class="flex justify-end">
+            <button 
+              @click="submitEvaluation" 
+              class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+            >
+              Submit
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Undrop Confirmation Modal -->
+      <div 
+        v-if="showUndropModal" 
+        class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
+      >
+        <div class="bg-white rounded-lg p-6 w-[400px] relative">
+          <button 
+            @click="showUndropModal = false" 
+            class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl"
+          >
+            &times;
+          </button>
+          <h2 class="text-xl font-bold mb-4">Confirm Undrop</h2>
+          <p>Are you sure you want to restore the intern's status to "{{ previousStatus }}"?</p>
+          <div class="flex justify-end mt-6">
+            <button 
+              @click="showUndropModal = false" 
+              class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition mr-2"
+            >
+              No
+            </button>
+            <button 
+              @click="undropIntern" 
+              class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
+            >
+              Yes
+            </button>
+          </div>
+        </div>
+      </div>
 
       <!-- Attendance Logs Section -->
       <h2 class="text-xl font-bold mt-8">Attendance Logs</h2>

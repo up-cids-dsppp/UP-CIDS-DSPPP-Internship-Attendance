@@ -87,7 +87,7 @@ const handleSubmit = async () => {
 
 // Go back to the previous page
 const goBack = () => {
-  router.back()
+  router.push('/intern/home') // Navigates to the previous page
 }
 
 // Get image URL

@@ -7,7 +7,8 @@ import NavBar from '../components/NavBar.vue'
 
 const route = useRoute()
 const router = useRouter()
-const logId = route.params.id // Get the log ID from the route parameter
+const internId = route.params.internId
+const logId = route.params.logId // Get the log ID from the route parameter
 const attendanceLog = ref(null) // Store the attendance log details
 const adminEmail = ref('') // Admin email
 const showModal = ref(false) // Control modal visibility
@@ -20,7 +21,7 @@ const maxDuration = ref(0) // Maximum duration
 const errors = ref({}) // Validation errors
 
 const goBack = () => {
-  router.back() // Navigates to the previous page
+  router.push(`/admin/interns/${internId}`) // Navigates to the previous page
 }
 
 // Fetch the attendance log details when the component is mounted
@@ -190,27 +191,29 @@ const getStatusColor = (status) => {
       <p><strong>Admin Remarks: </strong>{{ attendanceLog.admin_remarks || 'N/A' }}</p>
 
       <!-- Tasks Header -->
-      <h2 class="text-xl font-semibold mt-4">Tasks</h2>
-      <div v-if="attendanceLog.tasks.length">
-        <div v-for="task in attendanceLog.tasks" :key="task.id" class="bg-gray-100 p-4 rounded-lg mt-4">
-          <p><strong>Description:</strong> {{ task.description }}</p>
-          <p class="mt-4"><strong>Images:</strong></p>
-          <div v-if="task.images && task.images.length" class="mt-2">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <img
-                v-for="image in task.images"
-                :key="image.id"
-                :src="`${'http://localhost:8000/media/'}${image.file}`"
-                alt="Task Image"
-                class="rounded-md"
-                style="max-height: 150px;"
-              />
+      <div v-if="attendanceLog">
+        <h2 class="text-xl font-semibold mt-4">Tasks</h2>
+        <div v-if="attendanceLog.tasks && attendanceLog.tasks.length">
+          <div v-for="task in attendanceLog.tasks" :key="task.id" class="bg-gray-100 p-4 rounded-lg mt-4">
+            <p><strong>Description:</strong> {{ task.description }}</p>
+            <p class="mt-4"><strong>Images:</strong></p>
+            <div v-if="task.images && task.images.length" class="mt-2">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <img
+                  v-for="image in task.images"
+                  :key="image.id"
+                  :src="`${'http://localhost:8000/media/'}${image.file}`"
+                  alt="Task Image"
+                  class="rounded-md"
+                  style="max-height: 150px;"
+                />
+              </div>
             </div>
+            <p class="mt-4"><strong>Remarks:</strong> {{ task.remarks || 'N/A' }}</p>
           </div>
-          <p class="mt-4"><strong>Remarks:</strong> {{ task.remarks || 'N/A' }}</p>
         </div>
+        <div v-else class="text-gray-500">No tasks available.</div>
       </div>
-      <div v-else class="text-gray-500">No tasks available.</div>
     </div>
     <div v-else class="text-gray-500">Loading attendance log details...</div>
 

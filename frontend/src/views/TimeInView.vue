@@ -20,7 +20,7 @@ tasks.push({ description: '' })
 const router = useRouter()
 
 const goBack = () => {
-  router.back() // Navigates to the previous page
+  router.push('/intern/home') // Navigates to the previous page
 }
 
 const fetchCameras = async () => {

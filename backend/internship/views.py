@@ -422,6 +422,55 @@ def evaluate_attendance(request, log_id):
     except Exception as e:
         return JsonResponse({'message': str(e)}, status=400)
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@user_passes_test(lambda u: u.is_superuser)  # Ensure only admins can access
+def evaluate_intern(request, intern_id):
+    try:
+        # Retrieve the intern by ID
+        intern = Intern.objects.get(id=intern_id)
+
+        # Extract evaluation data from the request
+        evaluation_type = request.data.get('evaluation_type')
+        admin_remarks = request.data.get('admin_remarks')
+
+        print(f"Evaluation Type: {evaluation_type}, Admin Remarks: {admin_remarks}")
+
+        # Validate inputs
+        if not evaluation_type or not admin_remarks:
+            return JsonResponse({'message': 'Both type and remarks are required.'}, status=400)
+
+        # Update intern's status and admin remarks
+        intern.status = evaluation_type
+        intern.admin_remarks = admin_remarks
+        intern.save()
+
+        return JsonResponse({'message': 'Intern evaluated successfully.'}, status=200)
+    except Intern.DoesNotExist:
+        return JsonResponse({'message': 'Intern not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'message': str(e)}, status=400)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@user_passes_test(lambda u: u.is_superuser)  # Ensure only admins can access
+def undrop_intern(request, intern_id):
+    try:
+        intern = Intern.objects.get(id=intern_id)
+        previous_status = request.data.get('previous_status')
+
+        if not previous_status:
+            return JsonResponse({'message': 'Previous status is required.'}, status=400)
+
+        intern.status = previous_status
+        intern.save()
+
+        return JsonResponse({'message': 'Intern status updated successfully.'}, status=200)
+    except Intern.DoesNotExist:
+        return JsonResponse({'message': 'Intern not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'message': str(e)}, status=400)
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([InternJWTAuthentication, SessionAuthentication])

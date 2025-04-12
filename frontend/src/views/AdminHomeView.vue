@@ -31,6 +31,7 @@ const goToAddIntern = () => {
 const getRowClass = (status) => {
   if (status === 'completed') return 'bg-green-100'
   if (status === 'dropped') return 'bg-red-100'
+  if (status === 'passed') return 'bg-orange-100'
   return '' // Default for ongoing (clear)
 }
 </script>

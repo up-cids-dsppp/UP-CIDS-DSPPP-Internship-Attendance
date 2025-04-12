@@ -16,7 +16,7 @@ const handleLogin = async () => {
 const router = useRouter()
 
 const goBack = () => {
-  router.back() // Navigates to the previous page
+  router.push('/') // Navigates to the previous page
 }
 
 // Clear error message when the component is mounted
