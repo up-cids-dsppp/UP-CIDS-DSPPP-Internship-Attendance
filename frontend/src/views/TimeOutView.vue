@@ -12,6 +12,7 @@ const attendanceLog = ref(null) // Store the attendance log details
 const tasks = reactive([]) // Task list with descriptions, images, and remarks
 
 const objectURLs = new Set()
+const showConfirmationModal = ref(false) // Modal visibility for confirmation
 
 // Fetch attendance log details and tasks on component mount
 onMounted(async () => {
@@ -49,11 +50,18 @@ const handleFileUpload = (task, event) => {
   }
 }
 
+// Show confirmation modal
+const confirmSubmit = () => {
+  showConfirmationModal.value = true // Show the confirmation modal
+}
+
 // Validate and submit the tasks
 const handleSubmit = async () => {
+  showConfirmationModal.value = false // Hide the modal after confirmation
+
   // Validate tasks
   for (const task of tasks) {
-    if (!task.remarks || task.remarks.trim() === '') {
+    if (!task.intern_remarks || task.intern_remarks.trim() === '') {
       alert(`Please provide remarks for the task: "${task.description}"`)
       return
     }
@@ -169,7 +177,8 @@ onUnmounted(() => {
         <!-- Submit Button -->
         <div class="mt-6">
           <button
-            type="submit"
+            type="button"
+            @click="confirmSubmit"
             class="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition"
           >
             Submit
@@ -178,5 +187,30 @@ onUnmounted(() => {
       </form>
     </div>
     <div v-else class="text-gray-500">Loading attendance log details...</div>
+
+    <!-- Confirmation Modal -->
+    <div
+      v-if="showConfirmationModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+    >
+      <div class="bg-white p-6 rounded shadow-lg w-96">
+        <h2 class="text-lg font-bold mb-4">Confirm Submission</h2>
+        <p>Are you sure you want to time out?</p>
+        <div class="flex justify-end mt-4">
+          <button
+            @click="() => (showConfirmationModal = false)"
+            class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 mr-2"
+          >
+            Cancel
+          </button>
+          <button
+            @click="handleSubmit"
+            class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+          >
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
