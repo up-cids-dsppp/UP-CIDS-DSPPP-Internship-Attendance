@@ -111,6 +111,26 @@ const hasFlaggedTasks = computed(() => {
   return attendanceLogs.value.some(log => log.status === 'flagged');
 });
 
+// Check if the current time is within 8 AM to 5 PM Philippine local time
+const isWithinAllowedTime = computed(() => {
+  const now = new Date()
+  const currentHour = now.getHours()
+  return currentHour >= 8 && currentHour < 17 // 8 AM to 5 PM
+})
+
+// Check if there is already a "sent" attendance for the day
+const hasSentAttendanceToday = computed(() => {
+  const today = new Date().toISOString().split('T')[0] // Get today's date in YYYY-MM-DD format
+  return attendanceLogs.value.some(
+    (log) => log.date === today && log.status === 'sent'
+  )
+})
+
+// Determine if time-in/out is allowed
+const canTimeInOut = computed(() => {
+  return isWithinAllowedTime.value && !hasSentAttendanceToday.value
+})
+
 // Handle "Time In" button click
 const handleTimeIn = async () => {
   router.push('/intern/in') // Redirect to the time-in page
@@ -176,10 +196,9 @@ const viewAttendanceLog = (logId) => {
       </div>
 
       <div
-        v-else
         :class="[
           'text-white p-4 mt-4 rounded-lg max-w-md',
-          timeInOutStore.isTimedIn ? 'bg-red-500' : 'bg-green-500'
+          canTimeInOut ? (timeInOutStore.isTimedIn ? 'bg-red-500' : 'bg-green-500') : 'bg-gray-500'
         ]"
       >
         <p class="text-lg font-semibold">Today's Date: {{ currentDate }}</p>
@@ -188,20 +207,25 @@ const viewAttendanceLog = (logId) => {
           Tasks to accomplish: {{ timeInOutStore.tasksForTheDay }}
         </p>
         <div class="flex justify-end mt-4">
-          <button
-            v-if="!timeInOutStore.isTimedIn"
-            @click="handleTimeIn"
-            class="bg-white text-green-500 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
-          >
-            Time In
-          </button>
-          <button
-            v-else
-            @click="handleTimeOut"
-            class="bg-white text-red-500 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
-          >
-            Time Out
-          </button>
+          <template v-if="canTimeInOut">
+            <button
+              v-if="!timeInOutStore.isTimedIn"
+              @click="handleTimeIn"
+              class="bg-white text-green-500 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
+            >
+              Time In
+            </button>
+            <button
+              v-else
+              @click="handleTimeOut"
+              class="bg-white text-red-500 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
+            >
+              Time Out
+            </button>
+          </template>
+          <template v-else>
+            <p class="text-lg font-semibold">Cannot Time In/Out</p>
+          </template>
         </div>
       </div>
 

@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     "internship",
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -159,3 +160,8 @@ SIMPLE_JWT = {
 
 MEDIA_URL = 'media/'  # URL to access media files
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Directory to store uploaded files
+
+# Celery settings
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Redis as the message broker
+CELERY_ACCEPT_CONTENT = ['json']  # Accept JSON-encoded tasks
+CELERY_TASK_SERIALIZER = 'json'  # Serialize tasks in JSON format

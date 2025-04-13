@@ -176,6 +176,16 @@ def log_face_to_face_attendance(request):
         if intern.status in ['completed', 'dropped']:
             return JsonResponse({'message': 'You are not allowed to log attendance with your current status.'}, status=403)
 
+        # Check if the current time is within allowed hours (8 AM to 5 PM)
+        now = localtime()
+        if not (8 <= now.hour < 17):
+            return JsonResponse({'message': 'Time-in is only allowed between 8 AM and 5 PM.'}, status=403)
+
+        # Check if the intern already has a "sent" attendance for the day
+        today = now.date()
+        if Attendance.objects.filter(intern=intern, time_in__date=today, status='sent').exists():
+            return JsonResponse({'message': 'You have already logged attendance for today.'}, status=403)
+
         # Proceed with logging attendance
         face_screenshot = request.data.get('faceScreenshot')
         if not face_screenshot:
@@ -197,7 +207,7 @@ def log_face_to_face_attendance(request):
         attendance = Attendance.objects.create(
             intern=intern,
             type='f2f',
-            time_in=now()
+            time_in=now
         )
         attendance.tasks.add(task)  # Link the task to the attendance
 
@@ -222,6 +232,17 @@ def log_asynchronous_attendance(request):
         if intern.status in ['completed', 'dropped']:
             return JsonResponse({'message': 'You are not allowed to log attendance with your current status.'}, status=403)
 
+        # Check if the current time is within allowed hours (8 AM to 5 PM)
+        now = localtime()
+        if not (8 <= now.hour < 17):
+            return JsonResponse({'message': 'Time-in is only allowed between 8 AM and 5 PM.'}, status=403)
+
+        # Check if the intern already has a "sent" attendance for the day
+        today = now.date()
+        if Attendance.objects.filter(intern=intern, time_in__date=today, status='sent').exists():
+            return JsonResponse({'message': 'You have already logged attendance for today.'}, status=403)
+
+        # Validate tasks data
         tasks_data = request.data.get('tasks', [])
         if not tasks_data or not all(task.get('description', '').strip() for task in tasks_data):
             return JsonResponse({'message': 'All task descriptions must be filled out.'}, status=400)
@@ -230,7 +251,7 @@ def log_asynchronous_attendance(request):
         attendance = Attendance.objects.create(
             intern=intern,
             type='async',
-            time_in=now()
+            time_in=now
         )
 
         # Create and link tasks to the attendance
@@ -309,6 +330,15 @@ def submit_timeout(request, log_id):
         # Retrieve the attendance log
         attendance = Attendance.objects.get(id=log_id, intern=intern)
 
+        # Check if the attendance log is in the "ongoing" state
+        if attendance.status != 'ongoing':
+            return JsonResponse({'message': 'You can only submit a timeout for an ongoing attendance log.'}, status=403)
+
+        # Check if the current time is within allowed hours (8 AM to 5 PM)
+        now = localtime()
+        if not (8 <= now.hour < 17):
+            return JsonResponse({'message': 'Timeout is only allowed between 8 AM and 5 PM.'}, status=403)
+
         # Update tasks with remarks and images
         tasks_data = request.POST  # Form data for remarks
         files = request.FILES  # Uploaded files
@@ -332,7 +362,7 @@ def submit_timeout(request, log_id):
 
         # Update the attendance status and time_out
         attendance.status = 'sent'
-        attendance.time_out = now()
+        attendance.time_out = now
         attendance.save()
 
         return JsonResponse({'message': 'Timeout submitted successfully.'}, status=200)

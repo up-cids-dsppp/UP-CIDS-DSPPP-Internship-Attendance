@@ -107,16 +107,21 @@ router.beforeEach(async (to, from, next) => {
       }
     }
 
-    // Restrict access to /intern/in and /intern/out based on isTimedIn state
-    if (to.path === '/intern/in' && timeInOutStore.isTimedIn) {
-      return next('/intern/home') // Redirect to intern home if already timed in
-    }
-    if (to.path === '/intern/out' && !timeInOutStore.isTimedIn) {
-      return next('/intern/home') // Redirect to intern home if not timed in
+    // Restrict access to /intern/in
+    if (to.path === '/intern/in') {
+      if (timeInOutStore.isTimedIn || !timeInOutStore.canTimeInOut) {
+        return next('/unauthorized') // Redirect to unauthorized page
+      }
     }
 
-    // Other route restrictions...
-    return next()
+    // Restrict access to /intern/out/:log_id
+    if (to.name === 'intern_out') {
+      if (!timeInOutStore.isTimedIn) {
+        return next('/unauthorized') // Redirect to unauthorized page
+      }
+    }
+
+    return next() // Allow access to other routes
   }
 
   // Allow unauthenticated users to access login pages
@@ -124,11 +129,8 @@ router.beforeEach(async (to, from, next) => {
     return next()
   }
 
-  // Redirect unauthenticated users to the login page
-  if (to.path.startsWith('/admin')) {
-    return next('/unauthorized')
-  }
-  if (to.path.startsWith('/intern')) {
+  // Redirect unauthenticated users to the unauthorized page
+  if (to.path.startsWith('/admin') || to.path.startsWith('/intern')) {
     return next('/unauthorized')
   }
 
