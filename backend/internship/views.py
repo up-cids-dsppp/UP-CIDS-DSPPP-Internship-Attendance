@@ -90,12 +90,11 @@ def manage_interns(request):
         )
         return JsonResponse({'message': 'Intern added successfully', 'id': intern.id})
 
-@api_view(['GET', 'DELETE'])
+@api_view(['GET', 'DELETE', 'PUT'])
 @permission_classes([IsAuthenticated])
 @user_passes_test(lambda u: u.is_superuser)  # Ensure only admins can access
 def intern_details(request, intern_id):
     try:
-        # Retrieve the intern by ID
         intern = Intern.objects.get(id=intern_id)
 
         if request.method == 'GET':
@@ -134,6 +133,17 @@ def intern_details(request, intern_id):
                 'attendance_logs': formatted_logs,
             }
             return JsonResponse(intern_data, safe=False)
+
+        elif request.method == 'PUT':
+            data = request.data
+            intern.full_name = data.get('full_name', intern.full_name)
+            intern.email = data.get('email', intern.email)
+            if 'password' in data and data['password']:  # Only update if password is provided
+                intern.password = make_password(data['password'])  # Hash the new password
+            intern.start_date = data.get('start_date', intern.start_date)
+            intern.time_to_render = timedelta(hours=int(data['time_to_render']))
+            intern.save()
+            return JsonResponse({'message': 'Intern details updated successfully.'})
 
         elif request.method == 'DELETE':
             # Allow deletion only if the intern's status is "dropped" or "completed"

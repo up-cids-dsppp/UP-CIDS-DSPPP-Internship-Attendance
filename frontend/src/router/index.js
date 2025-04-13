@@ -79,6 +79,11 @@ const router = createRouter({
       component: AdminInternAttendanceView, // Correctly reference the imported component
     },
     {
+      path: '/admin/interns/:id/edit',
+      name: 'admin_edit_intern',
+      component: () => import('@/views/EditInternView.vue'), // Lazy load the component
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'not_found',
       component: NotFoundView,

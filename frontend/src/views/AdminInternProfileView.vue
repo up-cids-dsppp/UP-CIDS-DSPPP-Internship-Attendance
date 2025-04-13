@@ -239,6 +239,15 @@ const goBack = () => {
       </div>
 
       <h2 class="text-xl font-bold">Intern Profile</h2>
+      <!-- Edit Intern Button -->
+      <div class="mb-2 mt-2">
+        <button 
+          @click="router.push(`/admin/interns/${internId}/edit`)" 
+          class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+        >
+          Edit Intern
+        </button>
+      </div>
       <p class="mt-2"><strong>Full Name:</strong> {{ internDetails.full_name }}</p>
       <p class="mt-2"><strong>Email:</strong> {{ internDetails.email }}</p>
       <p class="mt-2"><strong>Start Date:</strong> {{ internDetails.start_date }}</p>
