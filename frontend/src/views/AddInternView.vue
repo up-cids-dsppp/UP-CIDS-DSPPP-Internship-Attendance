@@ -27,7 +27,7 @@ const timeToRender = ref('')
 // Store the admin's email
 const adminEmail = ref('')
 
-// Fetch the admin's email when the component is mounted
+// Fetch the admin's email and generate a password when the component is mounted
 onMounted(async () => {
   try {
     const response = await axios.get('/admin/profile') // Adjust endpoint if necessary
@@ -35,6 +35,9 @@ onMounted(async () => {
   } catch (error) {
     console.error('Failed to fetch admin email:', error)
   }
+
+  // Generate a password on mount
+  generatePassword();
 })
 
 const errors = ref({}); // Store validation errors
@@ -88,6 +91,16 @@ const confirmSubmit = async () => {
   }
 };
 
+const generatePassword = () => {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+  let newPassword = '';
+  for (let i = 0; i < 8; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    newPassword += characters[randomIndex];
+  }
+  password.value = newPassword; // Set the generated password
+};
+
 // Navigate back to the appropriate page based on user type
 const goBack = () => {
   router.push('/admin/home') // Redirect to admin home page
@@ -102,8 +115,7 @@ const showConfirmationModal = ref(false); // Control confirmation modal visibili
     <NavBar userType="admin" :userEmail="adminEmail" />
 
     <!-- Add Intern Form -->
-     <!-- Back Button -->
-     <p 
+    <p 
       @click="goBack" 
       class="mt-4 ml-6 text-gray-500 underline cursor-pointer hover:text-gray-700"
     >
@@ -136,16 +148,26 @@ const showConfirmationModal = ref(false); // Control confirmation modal visibili
           />
           <p v-if="errors.email" class="text-red-500 text-sm mt-1">{{ errors.email }}</p>
         </div>
-        <div>
+        <div class="relative">
           <label for="password" class="block font-medium mb-1">Password</label>
-          <input
-            id="password"
-            v-model="password"
-            type="password"
-            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter password"
-            required
-          />
+          <div class="flex items-center gap-2">
+            <input
+              id="password"
+              v-model="password"
+              type="text"
+              class="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Generated password"
+              readonly
+            />
+            <button
+              type="button"
+              @click="generatePassword"
+              class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
+            >
+              Generate
+            </button>
+          </div>
+          <p class="text-gray-500 text-sm mt-1">Please record/save this password in an external file.</p>
           <p v-if="errors.password" class="text-red-500 text-sm mt-1">{{ errors.password }}</p>
         </div>
         <div>
@@ -190,6 +212,9 @@ const showConfirmationModal = ref(false); // Control confirmation modal visibili
     <div class="bg-white rounded-lg p-6 w-[400px] relative">
       <h2 class="text-xl font-bold mb-4">Confirm Submission</h2>
       <p>Are you sure you want to add this intern?</p>
+      <p class="text-gray-700 mt-2">
+        Make sure the password: <strong>{{ password }}</strong> is saved in a separate document.
+      </p>
       <div class="flex justify-end mt-4">
         <button 
           @click="showConfirmationModal = false" 
