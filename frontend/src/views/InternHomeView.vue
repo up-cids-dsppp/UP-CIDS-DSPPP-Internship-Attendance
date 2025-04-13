@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import NavBar from '../components/NavBar.vue'
@@ -22,6 +22,11 @@ const internDetails = ref({
 // Attendance logs
 const attendanceLogs = ref([]) // Array to store attendance logs
 const mostRecentAttendance = ref(null) // Tracks the most recent attendance log
+
+// Sort and filter states for attendance logs
+const sortOption = ref('date-asc') // Default sort option
+const selectedStatuses = ref(['validated', 'flagged', 'sent', 'ongoing']) // Default status filter
+const selectedTypes = ref(['f2f', 'async']) // Default type filter
 
 // Date and time
 const currentDate = ref(new Date().toLocaleDateString())
@@ -76,6 +81,29 @@ onMounted(async () => {
   } catch (error) {
     console.error('Failed to fetch data:', error)
   }
+})
+
+// Computed property for filtered and sorted attendance logs
+const filteredAndSortedLogs = computed(() => {
+  // Filter by selected statuses and types
+  let filtered = attendanceLogs.value.filter(
+    (log) =>
+      selectedStatuses.value.includes(log.status) &&
+      selectedTypes.value.includes(log.type)
+  )
+
+  // Sort based on the selected sort option
+  if (sortOption.value === 'date-asc') {
+    filtered.sort((a, b) => new Date(a.date) - new Date(b.date))
+  } else if (sortOption.value === 'date-desc') {
+    filtered.sort((a, b) => new Date(b.date) - new Date(a.date))
+  } else if (sortOption.value === 'duration-asc') {
+    filtered.sort((a, b) => (a.work_duration || 0) - (b.work_duration || 0))
+  } else if (sortOption.value === 'duration-desc') {
+    filtered.sort((a, b) => (b.work_duration || 0) - (a.work_duration || 0))
+  }
+
+  return filtered
 })
 
 // Handle "Time In" button click
@@ -170,10 +198,65 @@ const viewAttendanceLog = (logId) => {
 
       <!-- Attendance Logs Section -->
       <h2 class="text-xl font-bold mt-8">Attendance Logs</h2>
-      <div v-if="attendanceLogs.length === 0" class="text-gray-500 mt-4 text-center">
-        No attendance logs reported.
+
+      <!-- Sort and Filter Section -->
+      <div class="mb-6 space-y-4">
+        <!-- Sort Dropdown -->
+        <div>
+          <label for="sort" class="block text-sm font-medium text-gray-700">Sort By:</label>
+          <select 
+            id="sort" 
+            v-model="sortOption" 
+            class="mt-1 block w-64 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          >
+            <option value="date-asc">Date (Earliest-Latest)</option>
+            <option value="date-desc">Date (Latest-Earliest)</option>
+            <option value="duration-asc">Work Duration (Shortest-Longest)</option>
+            <option value="duration-desc">Work Duration (Longest-Shortest)</option>
+          </select>
+        </div>
+
+        <!-- Filter Checkboxes -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Filter By Status:</label>
+          <div class="mt-1 space-y-1">
+            <div v-for="status in ['validated', 'flagged', 'sent', 'ongoing']" :key="status">
+              <label class="inline-flex items-center">
+                <input 
+                  type="checkbox" 
+                  v-model="selectedStatuses" 
+                  :value="status" 
+                  class="form-checkbox text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span class="ml-2 capitalize">{{ status }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Filter By Type:</label>
+          <div class="mt-1 space-y-1">
+            <div v-for="type in ['f2f', 'async']" :key="type">
+              <label class="inline-flex items-center">
+                <input 
+                  type="checkbox" 
+                  v-model="selectedTypes" 
+                  :value="type" 
+                  class="form-checkbox text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span class="ml-2 capitalize">{{ type }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
       </div>
-      <table v-else class="table-auto w-full mt-4 border-collapse border border-gray-300">
+
+      <!-- Attendance Logs Table -->
+      <div v-if="filteredAndSortedLogs.length === 0" class="text-gray-500 mt-4 mb-20 text-center">
+        No attendance logs match the selected criteria.
+      </div>
+      <table v-else class="table-auto w-full mt-4 mb-20 border-collapse border border-gray-300">
         <thead>
           <tr class="bg-gray-200">
             <th class="border border-gray-300 px-4 py-2">Date</th>
@@ -186,7 +269,7 @@ const viewAttendanceLog = (logId) => {
         </thead>
         <tbody>
           <tr
-            v-for="log in attendanceLogs"
+            v-for="log in filteredAndSortedLogs"
             :key="log.id"
             :class="{
               'bg-green-100': log.status === 'validated',

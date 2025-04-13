@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 import NavBar from '../components/NavBar.vue'
@@ -24,8 +24,14 @@ const internDetails = ref({
 // Attendance logs
 const attendanceLogs = ref([])
 
+// Sort and filter states for attendance logs
+const sortOption = ref('date-asc') // Default sort option
+const selectedStatuses = ref(['validated', 'flagged', 'sent', 'ongoing']) // Default status filter
+const selectedTypes = ref(['f2f', 'async']) // Default type filter
+
 // Modal states
 const showEvaluationModal = ref(false)
+const showEvaluationConfirmationModal = ref(false) // New confirmation modal state
 const showUndropModal = ref(false)
 const showDeleteModal = ref(false)
 const evaluationType = ref('')
@@ -56,6 +62,29 @@ onMounted(async () => {
   }
 })
 
+// Computed property for filtered and sorted attendance logs
+const filteredAndSortedLogs = computed(() => {
+  // Filter by selected statuses and types
+  let filtered = attendanceLogs.value.filter(
+    (log) =>
+      selectedStatuses.value.includes(log.status) &&
+      selectedTypes.value.includes(log.type)
+  )
+
+  // Sort based on the selected sort option
+  if (sortOption.value === 'date-asc') {
+    filtered.sort((a, b) => new Date(a.date) - new Date(b.date))
+  } else if (sortOption.value === 'date-desc') {
+    filtered.sort((a, b) => new Date(b.date) - new Date(a.date))
+  } else if (sortOption.value === 'duration-asc') {
+    filtered.sort((a, b) => (a.work_duration || 0) - (b.work_duration || 0))
+  } else if (sortOption.value === 'duration-desc') {
+    filtered.sort((a, b) => (b.work_duration || 0) - (a.work_duration || 0))
+  }
+
+  return filtered
+})
+
 const viewAttendanceLog = (logId) => {
   router.push(`/admin/interns/${internId}/attendance/${logId}`)
 }
@@ -82,6 +111,11 @@ const submitEvaluation = async () => {
     return
   }
 
+  // Show confirmation modal
+  showEvaluationConfirmationModal.value = true
+}
+
+const confirmEvaluation = async () => {
   try {
     const internId = route.params.id
     await axios.post(`/admin/interns/${internId}/evaluate`, {
@@ -90,6 +124,7 @@ const submitEvaluation = async () => {
     })
     alert('Intern evaluated successfully!')
     showEvaluationModal.value = false
+    showEvaluationConfirmationModal.value = false
     evaluationType.value = ''
     evaluationRemarks.value = ''
     location.reload()
@@ -270,6 +305,41 @@ const goBack = () => {
         </div>
       </div>
 
+      <!-- Evaluation Confirmation Modal -->
+      <div 
+        v-if="showEvaluationConfirmationModal" 
+        class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
+      >
+        <div class="bg-white rounded-lg p-6 w-[400px] relative">
+          <button 
+            @click="showEvaluationConfirmationModal = false" 
+            class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl"
+          >
+            &times;
+          </button>
+          <h2 class="text-xl font-bold mb-4">Confirm Evaluation</h2>
+          <p>Are you sure you want to evaluate this intern with the following details?</p>
+          <ul class="mt-4">
+            <li><strong>Evaluation Type:</strong> {{ evaluationType }}</li>
+            <li><strong>Remarks:</strong> {{ evaluationRemarks }}</li>
+          </ul>
+          <div class="flex justify-end mt-6">
+            <button 
+              @click="showEvaluationConfirmationModal = false" 
+              class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition mr-2"
+            >
+              No
+            </button>
+            <button 
+              @click="confirmEvaluation" 
+              class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+            >
+              Yes
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Undrop Confirmation Modal -->
       <div 
         v-if="showUndropModal" 
@@ -303,10 +373,65 @@ const goBack = () => {
 
       <!-- Attendance Logs Section -->
       <h2 class="text-xl font-bold mt-8">Attendance Logs</h2>
-      <div v-if="attendanceLogs.length === 0" class="text-gray-500 mt-4 text-center">
-        No attendance logs reported.
+
+      <!-- Sort and Filter Section -->
+      <div class="mb-6 space-y-4">
+        <!-- Sort Dropdown -->
+        <div>
+          <label for="sort" class="block text-sm font-medium text-gray-700">Sort By:</label>
+          <select 
+            id="sort" 
+            v-model="sortOption" 
+            class="mt-1 block w-64 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          >
+            <option value="date-asc">Date (Earliest-Latest)</option>
+            <option value="date-desc">Date (Latest-Earliest)</option>
+            <option value="duration-asc">Work Duration (Shortest-Longest)</option>
+            <option value="duration-desc">Work Duration (Longest-Shortest)</option>
+          </select>
+        </div>
+
+        <!-- Filter Checkboxes -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Filter By Status:</label>
+          <div class="mt-1 space-y-1">
+            <div v-for="status in ['validated', 'flagged', 'sent', 'ongoing']" :key="status">
+              <label class="inline-flex items-center">
+                <input 
+                  type="checkbox" 
+                  v-model="selectedStatuses" 
+                  :value="status" 
+                  class="form-checkbox text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span class="ml-2 capitalize">{{ status }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Filter By Type:</label>
+          <div class="mt-1 space-y-1">
+            <div v-for="type in ['f2f', 'async']" :key="type">
+              <label class="inline-flex items-center">
+                <input 
+                  type="checkbox" 
+                  v-model="selectedTypes" 
+                  :value="type" 
+                  class="form-checkbox text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span class="ml-2 capitalize">{{ type }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
       </div>
-      <table v-else class="table-auto w-full mt-4 border-collapse border border-gray-300">
+
+      <!-- Attendance Logs Table -->
+      <div v-if="filteredAndSortedLogs.length === 0" class="text-gray-500 mt-4 mb-20 text-center">
+        No attendance logs match the selected criteria.
+      </div>
+      <table v-else class="table-auto w-full mt-4 mb-20 border-collapse border border-gray-300">
         <thead>
           <tr class="bg-gray-200">
             <th class="border border-gray-300 px-4 py-2">Date</th>
@@ -320,7 +445,7 @@ const goBack = () => {
         </thead>
         <tbody>
           <tr
-            v-for="log in attendanceLogs"
+            v-for="log in filteredAndSortedLogs"
             :key="log.id"
             :class="{
               'bg-green-100': log.status === 'validated',
