@@ -27,6 +27,7 @@ const attendanceLogs = ref([])
 // Modal states
 const showEvaluationModal = ref(false)
 const showUndropModal = ref(false)
+const showDeleteModal = ref(false)
 const evaluationType = ref('')
 const evaluationRemarks = ref('')
 const errors = ref({})
@@ -114,6 +115,18 @@ const undropIntern = async () => {
   }
 }
 
+const deleteIntern = async () => {
+  try {
+    const internId = route.params.id
+    await axios.delete(`/admin/interns/${internId}/`) // Ensure trailing slash
+    alert('Intern deleted successfully!')
+    router.push('/admin/home') // Redirect to the interns list page
+  } catch (error) {
+    console.error('Failed to delete intern:', error)
+    alert('Failed to delete intern. Please try again.')
+  }
+}
+
 const goBack = () => {
   router.push('/admin/home') // Redirect to the interns list page
 }
@@ -142,10 +155,52 @@ const goBack = () => {
         <button 
           v-if="internDetails.status === 'dropped'" 
           @click="showUndropModal = true" 
-          class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
+          class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
         >
           Undrop
         </button>
+      </div>
+
+      <!-- Delete Intern Button -->
+      <div class="mb-6">
+        <button 
+          v-if="internDetails.status === 'dropped' || internDetails.status === 'completed'" 
+          @click="showDeleteModal = true" 
+          class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
+        >
+          Delete Intern
+        </button>
+      </div>
+
+      <!-- Delete Confirmation Modal -->
+      <div 
+        v-if="showDeleteModal" 
+        class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
+      >
+        <div class="bg-white rounded-lg p-6 w-[400px] relative">
+          <button 
+            @click="showDeleteModal = false" 
+            class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl"
+          >
+            &times;
+          </button>
+          <h2 class="text-xl font-bold mb-4">Confirm Delete</h2>
+          <p>Are you sure you want to delete this intern? This action cannot be undone.</p>
+          <div class="flex justify-end mt-6">
+            <button 
+              @click="showDeleteModal = false" 
+              class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition mr-2"
+            >
+              No
+            </button>
+            <button 
+              @click="deleteIntern" 
+              class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
+            >
+              Yes
+            </button>
+          </div>
+        </div>
       </div>
 
       <h2 class="text-xl font-bold">Intern Profile</h2>

@@ -90,49 +90,60 @@ def manage_interns(request):
         )
         return JsonResponse({'message': 'Intern added successfully', 'id': intern.id})
 
-@api_view(['GET'])
+@api_view(['GET', 'DELETE'])
 @permission_classes([IsAuthenticated])
 @user_passes_test(lambda u: u.is_superuser)  # Ensure only admins can access
-def get_intern_details(request, intern_id):
+def intern_details(request, intern_id):
     try:
         # Retrieve the intern by ID
         intern = Intern.objects.get(id=intern_id)
 
-        # Retrieve attendance logs linked to the intern
-        attendance_logs = Attendance.objects.filter(intern=intern).values(
-            'id',
-            'type',
-            'time_in',
-            'time_out',
-            'status',
-            'work_duration',  # Include work_duration
-        )
+        if request.method == 'GET':
+            # Retrieve attendance logs linked to the intern
+            attendance_logs = Attendance.objects.filter(intern=intern).values(
+                'id',
+                'type',
+                'time_in',
+                'time_out',
+                'status',
+                'work_duration',  # Include work_duration
+            )
 
-        # Format attendance logs for the response
-        formatted_logs = []
-        for log in attendance_logs:
-            formatted_logs.append({
-                'id': log['id'],
-                'type': log['type'],
-                'date': format(localtime(log['time_in']), 'Y-m-d'),
-                'time_in': format(localtime(log['time_in']), 'H:i:s'),
-                'time_out': format(localtime(log['time_out']), 'H:i:s') if log['time_out'] else None,
-                'status': log['status'],
-                'work_duration': log['work_duration'].total_seconds() / 3600 if log['work_duration'] else 0,  # Convert to hours
-            })
+            # Format attendance logs for the response
+            formatted_logs = []
+            for log in attendance_logs:
+                formatted_logs.append({
+                    'id': log['id'],
+                    'type': log['type'],
+                    'date': format(localtime(log['time_in']), 'Y-m-d'),
+                    'time_in': format(localtime(log['time_in']), 'H:i:s'),
+                    'time_out': format(localtime(log['time_out']), 'H:i:s') if log['time_out'] else None,
+                    'status': log['status'],
+                    'work_duration': log['work_duration'].total_seconds() / 3600 if log['work_duration'] else 0,  # Convert to hours
+                })
 
-        # Return all details except the password
-        intern_data = {
-            'id': intern.id,
-            'full_name': intern.full_name,
-            'email': intern.email,
-            'start_date': intern.start_date,
-            'time_to_render': intern.time_to_render.total_seconds() / 3600,  # Convert timedelta to hours
-            'time_rendered': intern.time_rendered.total_seconds() / 3600 if intern.time_rendered else 0,  # Convert timedelta to hours
-            'status': intern.status,
-            'attendance_logs': formatted_logs,
-        }
-        return JsonResponse(intern_data, safe=False)
+            # Return all details except the password
+            intern_data = {
+                'id': intern.id,
+                'full_name': intern.full_name,
+                'email': intern.email,
+                'start_date': intern.start_date,
+                'time_to_render': intern.time_to_render.total_seconds() / 3600,  # Convert timedelta to hours
+                'time_rendered': intern.time_rendered.total_seconds() / 3600 if intern.time_rendered else 0,  # Convert timedelta to hours
+                'status': intern.status,
+                'attendance_logs': formatted_logs,
+            }
+            return JsonResponse(intern_data, safe=False)
+
+        elif request.method == 'DELETE':
+            # Allow deletion only if the intern's status is "dropped" or "completed"
+            if intern.status not in ['dropped', 'completed']:
+                return JsonResponse({'message': 'Intern can only be deleted if their status is "dropped" or "completed".'}, status=400)
+
+            # Delete the intern
+            intern.delete()
+            return JsonResponse({'message': 'Intern deleted successfully.'}, status=200)
+
     except Intern.DoesNotExist:
         return JsonResponse({'message': 'Intern not found'}, status=404)
     except Exception as e:
