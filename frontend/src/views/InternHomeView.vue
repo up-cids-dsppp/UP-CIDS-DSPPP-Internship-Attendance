@@ -106,6 +106,11 @@ const filteredAndSortedLogs = computed(() => {
   return filtered
 })
 
+// Computed property to check if there are flagged tasks
+const hasFlaggedTasks = computed(() => {
+  return attendanceLogs.value.some(log => log.status === 'flagged');
+});
+
 // Handle "Time In" button click
 const handleTimeIn = async () => {
   router.push('/intern/in') // Redirect to the time-in page
@@ -130,6 +135,10 @@ const viewAttendanceLog = (logId) => {
 
     <!-- Intern Content -->
     <div class="mt-8 px-6">
+    <!-- Flagged Tasks Warning -->
+    <div v-if="hasFlaggedTasks" class="text-red-500 font-bold mb-4">
+      You have flagged tasks! Please email admin for re-evaluation.
+    </div>
       <h2 class="text-xl font-bold">Welcome, {{ internDetails.full_name }}!</h2>
       <p class="mt-2"><strong>Email:</strong> {{ internDetails.email }}</p>
       <p class="mt-2"><strong>Start Date:</strong> {{ internDetails.start_date }}</p>

@@ -77,14 +77,15 @@ const getStatusColor = (status) => {
       <h1 class="text-2xl font-bold mb-4">Attendance Log Details</h1>
       <p><strong>Date: </strong>{{ attendanceLog.date }}</p>
       <p><strong>Type: </strong>{{ attendanceLog.type }}</p>
+      <p><strong>Time In: </strong>{{ attendanceLog.time_in }}</p>
+      <p><strong>Time Out: </strong>{{ attendanceLog.time_out || 'N/A' }}</p>
+      <p><strong>Work Duration: </strong>{{ (attendanceLog.work_duration || 0).toFixed(2) }} hours</p>
+      <br>
       <p><strong>Status: </strong> 
         <span :class="getStatusColor(attendanceLog.status)">
           {{ attendanceLog.status }}
         </span>
       </p>
-      <p><strong>Time In: </strong>{{ attendanceLog.time_in }}</p>
-      <p><strong>Time Out: </strong>{{ attendanceLog.time_out || 'N/A' }}</p>
-      <p><strong>Work Duration: </strong>{{ (attendanceLog.work_duration || 0).toFixed(2) }} hours</p>
       <p><strong>Admin Remarks: </strong><br>{{ attendanceLog.admin_remarks || 'N/A' }}</p>
       <h2 class="text-xl font-semibold mt-4">Tasks</h2>
       <div v-if="attendanceLog.tasks.length">

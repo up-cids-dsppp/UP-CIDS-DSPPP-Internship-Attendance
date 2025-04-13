@@ -1,4 +1,3 @@
-<!-- filepath: /Users/gabrielramos/Desktop/UP-CIDS-DSPP-Internship-Attendance/frontend/src/views/AttendanceLogView.vue -->
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -19,6 +18,8 @@ const evaluationDuration = ref(0) // Evaluation duration
 const evaluationRemarks = ref('') // Evaluation remarks
 const maxDuration = ref(0) // Maximum duration
 const errors = ref({}) // Validation errors
+const showFeedbackConfirmation = ref(false); // Feedback confirmation modal
+const showEvaluationConfirmation = ref(false); // Evaluation confirmation modal
 
 const goBack = () => {
   router.push(`/admin/interns/${internId}`) // Navigates to the previous page
@@ -28,100 +29,105 @@ const goBack = () => {
 onMounted(async () => {
   try {
     // Fetch admin details
-    const profileResponse = await axios.get('/admin/profile')
-    adminEmail.value = profileResponse.data.email
+    const profileResponse = await axios.get('/admin/profile');
+    adminEmail.value = profileResponse.data.email;
 
     // Fetch attendance log details
-    const response = await axios.get(`/admin/interns/attendance/${logId}/`)
-    attendanceLog.value = response.data
+    const response = await axios.get(`/admin/interns/attendance/${logId}/`);
+    attendanceLog.value = response.data;
 
     // Ensure tasks exist before iterating
     if (attendanceLog.value.tasks && attendanceLog.value.tasks.length > 0) {
       attendanceLog.value.tasks.forEach(task => {
-        console.log(`Task ID: ${task.id}, Description: ${task.description}`)
+        console.log(`Task ID: ${task.id}, Description: ${task.description}`);
         if (task.images && task.images.length > 0) {
           task.images.forEach(image => {
-            console.log(`Image ID: ${image.id}, File URL: ${image.file}`)
-          })
+            console.log(`Image ID: ${image.id}, File URL: ${image.file}`);
+          });
         } else {
-          console.log(`Task ID: ${task.id} has no images.`)
+          console.log(`Task ID: ${task.id} has no images.`);
         }
-      })
+      });
     } else {
-      console.log('No tasks available for this attendance log.')
+      console.log('No tasks available for this attendance log.');
     }
 
+    // Calculate max duration
     if (attendanceLog.value.time_in && attendanceLog.value.time_out) {
-      const timeIn = new Date(attendanceLog.value.time_in)
-      const timeOut = new Date(attendanceLog.value.time_out)
-      maxDuration.value = (timeOut - timeIn) / 1000 // Convert to seconds
+      const currentDate = new Date().toISOString().split('T')[0]; // Get today's date
+      const timeIn = new Date(`${currentDate}T${attendanceLog.value.time_in}`);
+      const timeOut = new Date(`${currentDate}T${attendanceLog.value.time_out}`);
+      maxDuration.value = (timeOut - timeIn) / (1000 * 60 * 60); // Convert to hours
+      console.log('Max Duration (hours):', maxDuration.value);
     }
   } catch (error) {
-    console.error('Failed to fetch attendance log:', error)
+    console.error('Failed to fetch attendance log:', error);
   }
 })
 
-// Submit feedback
-const submitFeedback = async () => {
-  errors.value = {} // Reset errors
+// Confirm feedback submission
+const confirmFeedbackSubmission = async () => {
+  errors.value = {}; // Reset errors
 
   // Validate inputs
   if (!feedbackType.value) {
-    errors.value.type = 'Feedback type is required.'
+    errors.value.type = 'Feedback type is required.';
   }
   if (!feedbackRemarks.value.trim()) {
-    errors.value.remarks = 'Remarks are required.'
+    errors.value.remarks = 'Remarks are required.';
   }
 
+  // Check if there are any validation errors
   if (Object.keys(errors.value).length > 0) {
-    return
+    return; // Stop submission if there are errors
   }
 
   try {
     await axios.post(`/admin/interns/attendance/${logId}/feedback`, {
       type: feedbackType.value,
-      remarks: feedbackRemarks.value,
-    })
-    alert('Feedback submitted successfully!')
-    showModal.value = false // Close modal
-    feedbackType.value = '' // Reset dropdown
-    feedbackRemarks.value = '' // Reset text area
-    location.reload() // Refresh the page
+      admin_remarks: feedbackRemarks.value,
+    });
+    alert('Feedback submitted successfully!');
+    showModal.value = false; // Close modal
+    feedbackType.value = ''; // Reset dropdown
+    feedbackRemarks.value = ''; // Reset text area
+    location.reload(); // Refresh the page
   } catch (error) {
-    console.error('Failed to submit feedback:', error)
-    alert('Failed to submit feedback. Please try again.')
+    console.error('Failed to submit feedback:', error);
+    alert('Failed to submit feedback. Please try again.');
   }
-}
+};
 
-// Submit evaluation
-const submitEvaluation = async () => {
-  errors.value = {} // Reset errors
+// Confirm evaluation submission
+const confirmEvaluationSubmission = async () => {
+  errors.value = {}; // Reset errors
 
   // Validate inputs
   if (evaluationDuration.value < 0 || evaluationDuration.value > maxDuration.value) {
-    errors.value.duration = 'Duration must be between 0 and the maximum allowed.'
+    errors.value.duration = 'Duration must be between 0 and the maximum allowed.';
   }
   if (!evaluationRemarks.value.trim()) {
-    errors.value.remarks = 'Remarks are required.'
+    errors.value.remarks = 'Remarks are required.';
   }
 
+  // Check if there are any validation errors
   if (Object.keys(errors.value).length > 0) {
-    return
+    return; // Stop submission if there are errors
   }
 
   try {
     await axios.post(`/admin/interns/attendance/${logId}/evaluate`, {
       duration: evaluationDuration.value,
       admin_remarks: evaluationRemarks.value,
-    })
-    alert('Attendance evaluated successfully!')
-    evaluationModal.value = false // Close modal
-    location.reload() // Refresh the page
+    });
+    alert('Attendance evaluated successfully!');
+    evaluationModal.value = false; // Close modal
+    location.reload(); // Refresh the page
   } catch (error) {
-    console.error('Failed to evaluate attendance:', error)
-    alert('Failed to evaluate attendance. Please try again.')
+    console.error('Failed to evaluate attendance:', error);
+    alert('Failed to evaluate attendance. Please try again.');
   }
-}
+};
 
 // Function to determine the status color
 const getStatusColor = (status) => {
@@ -180,14 +186,15 @@ const getStatusColor = (status) => {
       </div>
       <p><strong>Date: </strong>{{ attendanceLog.date }}</p>
       <p><strong>Type: </strong>{{ attendanceLog.type }}</p>
+      <p><strong>Time In: </strong>{{ attendanceLog.time_in }}</p>
+      <p><strong>Time Out: </strong>{{ attendanceLog.time_out || 'N/A' }}</p>
+      <p><strong>Work Duration: </strong>{{ (attendanceLog.work_duration || 0).toFixed(2) }} hours</p>
+      <br>
       <p><strong>Status: </strong> 
         <span :class="getStatusColor(attendanceLog.status)">
           {{ attendanceLog.status }}
         </span>
       </p>
-      <p><strong>Time In: </strong>{{ attendanceLog.time_in }}</p>
-      <p><strong>Time Out: </strong>{{ attendanceLog.time_out || 'N/A' }}</p>
-      <p><strong>Work Duration: </strong>{{ (attendanceLog.work_duration || 0).toFixed(2) }} hours</p>
       <p><strong>Admin Remarks: </strong><br>{{ attendanceLog.admin_remarks || 'N/A' }}</p>
 
       <!-- Tasks Header -->
@@ -255,10 +262,35 @@ const getStatusColor = (status) => {
         </div>
         <div class="flex justify-end">
           <button 
-            @click="submitFeedback" 
+            @click="confirmFeedbackSubmission" 
             class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
           >
             Submit
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feedback Confirmation Modal -->
+    <div 
+      v-if="showFeedbackConfirmation" 
+      class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-lg p-6 w-[400px] relative">
+        <h2 class="text-xl font-bold mb-4">Confirm Feedback Submission</h2>
+        <p>Are you sure you want to submit this feedback?</p>
+        <div class="flex justify-end mt-4">
+          <button 
+            @click="showFeedbackConfirmation = false" 
+            class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition mr-2"
+          >
+            Cancel
+          </button>
+          <button 
+            @click="confirmFeedbackSubmission" 
+            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+          >
+            Confirm
           </button>
         </div>
       </div>
@@ -278,13 +310,14 @@ const getStatusColor = (status) => {
         </button>
         <h2 class="text-xl font-bold mb-4">Evaluate Attendance</h2>
         <div class="mb-4">
-          <label for="evaluationDuration" class="block mb-2">Duration (seconds):</label>
+          <label for="evaluationDuration" class="block mb-2">Duration (hours):</label>
           <input 
             id="evaluationDuration"
             type="number"
             v-model="evaluationDuration"
             :max="maxDuration"
             :min="0"
+            step="0.01"
             class="border rounded px-4 py-2 mb-4 w-full"
           />
           <input 
@@ -292,6 +325,7 @@ const getStatusColor = (status) => {
             v-model="evaluationDuration"
             :max="maxDuration"
             :min="0"
+            step="0.01"
             class="w-full"
           />
           <p v-if="errors.duration" class="text-red-500 text-sm mt-1">{{ errors.duration }}</p>
@@ -308,10 +342,35 @@ const getStatusColor = (status) => {
         </div>
         <div class="flex justify-end">
           <button 
-            @click="submitEvaluation" 
+            @click="confirmEvaluationSubmission" 
             class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
           >
             Submit
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Evaluation Confirmation Modal -->
+    <div 
+      v-if="showEvaluationConfirmation" 
+      class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-lg p-6 w-[400px] relative">
+        <h2 class="text-xl font-bold mb-4">Confirm Evaluation Submission</h2>
+        <p>Are you sure you want to submit this evaluation?</p>
+        <div class="flex justify-end mt-4">
+          <button 
+            @click="showEvaluationConfirmation = false" 
+            class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition mr-2"
+          >
+            Cancel
+          </button>
+          <button 
+            @click="confirmEvaluationSubmission" 
+            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+          >
+            Confirm
           </button>
         </div>
       </div>

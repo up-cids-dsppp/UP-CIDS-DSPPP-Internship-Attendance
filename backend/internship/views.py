@@ -428,12 +428,12 @@ def evaluate_attendance(request, log_id):
             return JsonResponse({'message': 'Duration and remarks are required.'}, status=400)
 
         # Ensure duration is within valid range
-        max_duration = (attendance.time_out - attendance.time_in).total_seconds()
+        max_duration = (attendance.time_out - attendance.time_in).total_seconds() / 3600  # Convert to hours
         if not (0 <= float(duration) <= max_duration):
             return JsonResponse({'message': 'Invalid duration value.'}, status=400)
 
         # Update intern's time_rendered
-        attendance.work_duration = timedelta(seconds=float(duration))
+        attendance.work_duration = timedelta(hours=float(duration))  # Convert hours to timedelta
 
         # Update attendance log
         attendance.admin_remarks = admin_remarks
