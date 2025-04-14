@@ -126,9 +126,17 @@ const hasSentAttendanceToday = computed(() => {
   )
 })
 
+// Check if there is already a timed-out attendance for today
+const hasTimedOutAttendanceToday = computed(() => {
+  const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+  return attendanceLogs.value.some(
+    (log) => log.date === today && log.time_out // Check if time_out exists for today's date
+  );
+});
+
 // Determine if time-in/out is allowed
 const canTimeInOut = computed(() => {
-  return isWithinAllowedTime.value && !hasSentAttendanceToday.value
+  return isWithinAllowedTime.value && !hasSentAttendanceToday.value && !hasTimedOutAttendanceToday.value;
 })
 
 // Handle "Time In" button click
@@ -198,7 +206,7 @@ const viewAttendanceLog = (logId) => {
       <div
         :class="[
           'text-white p-4 mt-4 rounded-lg max-w-md',
-          canTimeInOut ? (timeInOutStore.isTimedIn ? 'bg-red-500' : 'bg-green-500') : 'bg-gray-500'
+          hasTimedOutAttendanceToday ? 'bg-gray-500' : (canTimeInOut ? (timeInOutStore.isTimedIn ? 'bg-red-500' : 'bg-green-500') : 'bg-gray-500')
         ]"
       >
         <p class="text-lg font-semibold">Today's Date: {{ currentDate }}</p>
