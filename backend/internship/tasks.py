@@ -1,4 +1,4 @@
-from celery import shared_task
+from backend.backend.celery import shared_task
 from django.utils.timezone import localtime
 from internship.models import Attendance
 
