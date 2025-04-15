@@ -445,10 +445,10 @@ const goBack = () => {
           <tr class="bg-gray-200">
             <th class="border border-gray-300 px-4 py-2">Date</th>
             <th class="border border-gray-300 px-4 py-2">Type</th>
+            <th class="border border-gray-300 px-4 py-2">Status</th>
             <th class="border border-gray-300 px-4 py-2">Time In</th>
             <th class="border border-gray-300 px-4 py-2">Time Out</th>
             <th class="border border-gray-300 px-4 py-2">Work Duration (hours)</th>
-            <th class="border border-gray-300 px-4 py-2">Status</th>
             <th class="border border-gray-300 px-4 py-2">Actions</th>
           </tr>
         </thead>
@@ -466,10 +466,10 @@ const goBack = () => {
           >
             <td class="border border-gray-300 px-4 py-2">{{ log.date }}</td>
             <td class="border border-gray-300 px-4 py-2">{{ log.type }}</td>
+            <td class="border border-gray-300 px-4 py-2">{{ log.status }}</td>
             <td class="border border-gray-300 px-4 py-2">{{ log.time_in }}</td>
             <td class="border border-gray-300 px-4 py-2">{{ log.time_out || 'N/A' }}</td>
             <td class="border border-gray-300 px-4 py-2">{{ (log.work_duration || 0).toFixed(2) }}</td>
-            <td class="border border-gray-300 px-4 py-2">{{ log.status }}</td>
             <td class="border border-gray-300 px-4 py-2">
               <button 
                 @click="viewAttendanceLog(log.id)" 
