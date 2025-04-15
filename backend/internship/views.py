@@ -392,6 +392,7 @@ def get_intern_attendance(request, log_id):
                 'description': task.description,
                 'intern_remarks': task.intern_remarks,
                 'images': list(images),
+                'remarks': task.intern_remarks,  # Include admin remarks
             })
 
         # Format the response
@@ -404,6 +405,7 @@ def get_intern_attendance(request, log_id):
             'time_in': format(localtime(attendance.time_in), 'H:i:s'),
             'time_out': format(localtime(attendance.time_out), 'H:i:s') if attendance.time_out else None,
             'work_duration': attendance.work_duration.total_seconds() / 3600 if attendance.work_duration else 0,  # Convert to hours
+            'tasks': tasks_data,
         }
 
         return JsonResponse(response_data)
