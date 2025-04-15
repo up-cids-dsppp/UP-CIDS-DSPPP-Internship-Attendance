@@ -84,3 +84,27 @@ export const useAuthStore = defineStore('auth', () => {
     refreshAccessToken,
   }
 })
+
+axios.interceptors.response.use(
+  (response) => response, // Pass through successful responses
+  async (error) => {
+    const authStore = useAuthStore()
+
+    // Check if the error is due to an expired access token
+    if (error.response?.status === 401 && error.response?.data?.code === 'token_not_valid') {
+      try {
+        // Attempt to refresh the access token
+        await authStore.refreshAccessToken()
+        // Retry the original request with the new access token
+        error.config.headers['Authorization'] = `Bearer ${authStore.accessToken}`
+        return axios.request(error.config)
+      } catch (refreshError) {
+        // If refreshing fails, log the user out and redirect to the landing page
+        authStore.logout()
+        return Promise.reject(refreshError)
+      }
+    }
+
+    return Promise.reject(error) // Pass through other errors
+  }
+)
