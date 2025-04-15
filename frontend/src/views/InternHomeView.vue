@@ -136,7 +136,9 @@ const hasTimedOutAttendanceToday = computed(() => {
 
 // Determine if time-in/out is allowed
 const canTimeInOut = computed(() => {
-  return isWithinAllowedTime.value && !hasSentAttendanceToday.value && !hasTimedOutAttendanceToday.value;
+  // Check if the intern's status is not "dropped" or "completed"
+  const isStatusAllowed = internDetails.value.status !== 'dropped' && internDetails.value.status !== 'completed';
+  return isStatusAllowed && !hasTimedOutAttendanceToday.value; // Combine with the timed-out check
 })
 
 // Handle "Time In" button click
@@ -179,6 +181,7 @@ const viewAttendanceLog = (logId) => {
             'text-green-500': internDetails.status === 'completed',
             'text-black': internDetails.status === 'ongoing',
             'text-red-500': internDetails.status === 'dropped',
+            'text-orange-500': internDetails.status === 'passed',
           }"
         >
           {{ internDetails.status }}

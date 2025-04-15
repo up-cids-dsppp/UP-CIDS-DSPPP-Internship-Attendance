@@ -76,6 +76,10 @@ class Attendance(models.Model):
     work_duration = models.DurationField(default="0:00:00")  # Tracks time already rendered
 
     def save(self, *args, **kwargs):
+        # Calculate work_duration if status is 'validated' and time_out is set
+        if self.status == 'validated' and self.time_out:
+            self.work_duration = self.time_out - self.time_in
+
         # Call the parent save method
         super().save(*args, **kwargs)
 
