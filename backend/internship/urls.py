@@ -22,6 +22,8 @@ urlpatterns = [
     path('admin/interns/attendance/<int:log_id>/evaluate', views.evaluate_attendance, name='evaluate_attendance'),
     path('admin/interns/<int:intern_id>/evaluate', views.evaluate_intern, name='evaluate_intern'),
     path('admin/interns/<int:intern_id>/undrop', views.undrop_intern, name='undrop_intern'),
+    path('admin/hash-password', views.hash_password, name='hash_password'),
+    path('admin/check-password-uniqueness', views.check_password_uniqueness, name='check_password_uniqueness'),
 
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

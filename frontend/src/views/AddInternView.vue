@@ -91,15 +91,61 @@ const confirmSubmit = async () => {
   }
 };
 
-const generatePassword = () => {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
-  let newPassword = '';
-  for (let i = 0; i < 8; i++) {
-    const randomIndex = Math.floor(Math.random() * characters.length);
-    newPassword += characters[randomIndex];
+// Add a loading state
+const isGeneratingPassword = ref(false)
+
+const generatePassword = async () => {
+  isGeneratingPassword.value = true // Set loading state
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*'
+  let newPassword = ''
+  let isUnique = false
+
+  try {
+    while (!isUnique) {
+      // Generate a random password
+      newPassword = ''
+      for (let i = 0; i < 8; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length)
+        newPassword += characters[randomIndex]
+      }
+
+      // Hash the generated password
+      const hashedPassword = await hashPassword(newPassword)
+
+      // Check if the hashed password already exists in the database
+      isUnique = await checkPasswordUniqueness(hashedPassword)
+    }
+
+    password.value = newPassword // Set the unique password
+  } catch (error) {
+    console.error('Error generating password:', error)
+    alert('Failed to generate password. Please try again.')
+  } finally {
+    isGeneratingPassword.value = false // Reset loading state
   }
-  password.value = newPassword; // Set the generated password
-};
+}
+
+// Hash the password using the same algorithm as the backend
+const hashPassword = async (plainPassword) => {
+  try {
+    const response = await axios.post('/admin/hash-password', { password: plainPassword })
+    return response.data.hashed_password
+  } catch (error) {
+    console.error('Failed to hash password:', error)
+    return null
+  }
+}
+
+// Check if the hashed password is unique
+const checkPasswordUniqueness = async (hashedPassword) => {
+  try {
+    const response = await axios.post('/admin/check-password-uniqueness', { hashed_password: hashedPassword })
+    return response.data.is_unique
+  } catch (error) {
+    console.error('Failed to check password uniqueness:', error)
+    return false
+  }
+}
 
 // Navigate back to the appropriate page based on user type
 const goBack = () => {
@@ -162,9 +208,11 @@ const showConfirmationModal = ref(false); // Control confirmation modal visibili
             <button
               type="button"
               @click="generatePassword"
-              class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
+              :disabled="isGeneratingPassword"
+              class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Generate
+              <span v-if="isGeneratingPassword">Generating...</span>
+              <span v-else>Generate</span>
             </button>
           </div>
           <p class="text-gray-500 text-sm mt-1">Please record/save this password in an external file.</p>

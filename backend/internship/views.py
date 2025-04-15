@@ -588,3 +588,32 @@ def intern_profile_with_logs(request):
         return JsonResponse({'message': 'Intern not found'}, status=404)
     except Exception as e:
         return JsonResponse({'message': str(e)}, status=400)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])  # Ensure only authenticated users can access
+def hash_password(request):
+    """
+    Hash a plain password using the backend's hashing algorithm.
+    """
+    plain_password = request.data.get('password')
+    if not plain_password:
+        return JsonResponse({'error': 'Password is required'}, status=400)
+    hashed_password = make_password(plain_password)
+    return JsonResponse({'hashed_password': hashed_password})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])  # Ensure only authenticated users can access
+def check_password_uniqueness(request):
+    """
+    Check if a hashed password already exists in the database.
+    """
+    hashed_password = request.data.get('hashed_password')
+    if not hashed_password:
+        return JsonResponse({'error': 'Hashed password is required'}, status=400)
+
+    # Compare hashed password with existing intern passwords
+    for intern in Intern.objects.all():
+        if check_password(intern.password, hashed_password):
+            return JsonResponse({'is_unique': False})
+
+    return JsonResponse({'is_unique': True})
