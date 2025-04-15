@@ -59,6 +59,20 @@ const confirmSubmit = () => {
 const handleSubmit = async () => {
   showConfirmationModal.value = false // Hide the modal after confirmation
 
+  // Validate time for F2F attendance
+  if (attendanceLog.value.type === 'Face-to-Face') {
+    const now = new Date()
+    const startTime = new Date()
+    const endTime = new Date()
+    startTime.setHours(7, 30, 0) // 7:30 AM
+    endTime.setHours(17, 30, 0) // 5:30 PM
+
+    if (now < startTime || now > endTime) {
+      alert('Face-to-Face attendance can only be submitted between 7:30 AM and 5:30 PM.')
+      return
+    }
+  }
+
   // Validate tasks
   for (const task of tasks) {
     if (!task.intern_remarks || task.intern_remarks.trim() === '') {

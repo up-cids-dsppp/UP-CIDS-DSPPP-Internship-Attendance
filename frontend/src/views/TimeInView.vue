@@ -92,6 +92,18 @@ const submitForm = async () => {
 
     // Check for Face-to-Face attendance
     if (attendanceType.value === 'Face-to-Face') {
+      // Validate time for F2F attendance
+      const now = new Date()
+      const startTime = new Date()
+      const endTime = new Date()
+      startTime.setHours(7, 30, 0) // 7:30 AM
+      endTime.setHours(17, 30, 0) // 5:30 PM
+
+      if (now < startTime || now > endTime) {
+        alert('Face-to-Face attendance can only be submitted between 7:30 AM and 5:30 PM.')
+        return
+      }
+
       if (!faceScreenshot.value) {
         alert('Please take a face screenshot.')
         return
