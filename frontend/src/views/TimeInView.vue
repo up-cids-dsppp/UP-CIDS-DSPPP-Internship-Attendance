@@ -109,11 +109,9 @@ const submitForm = async () => {
         return
       }
 
-      // Submit face-to-face attendance
+      // Submit face-to-face attendance with two tasks
       await axios.post('/intern/attendance/f2f', {
-        type: 'f2f',
         faceScreenshot: faceScreenshot.value,
-        intern_remarks: 'present',
       })
     }
 

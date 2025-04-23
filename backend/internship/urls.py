@@ -8,10 +8,12 @@ from rest_framework_simplejwt.views import (
 urlpatterns = [
     path('intern/login', views.intern_login, name='intern_login'),
     path('intern/profile', views.intern_profile_with_logs, name='intern_profile'),
-    path('intern/attendance/f2f', views.log_face_to_face_attendance, name='log_face_to_face_attendance'),
-    path('intern/attendance/async', views.log_asynchronous_attendance, name='log_asynchronous_attendance'),
-    path('intern/attendance/log/<int:log_id>/', views.attendance_log_details, name='attendance_log_details'),
-    path('intern/attendance/log/<int:log_id>/submit', views.submit_timeout, name='submit_timeout'),
+    path('intern/attendance/f2f', views.send_f2f_in, name='log_face_to_face_attendance'),
+    path('intern/attendance/async', views.send_async_in, name='log_asynchronous_attendance'),
+    path('intern/attendance/<int:log_id>/', views.attendance_log_details, name='attendance_log_details'),
+    path('intern/attendance/<int:log_id>/submit/async', views.submit_async_out, name='submit_async_timeout'),
+    path('intern/attendance/<int:log_id>/submit/f2f', views.submit_f2f_out, name='submit_f2f_timeout'),
+
 
     path('admin/login', views.admin_login, name='admin_login'),
     path('admin/profile', views.admin_profile, name='admin_profile'),

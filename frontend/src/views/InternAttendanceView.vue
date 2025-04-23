@@ -23,7 +23,7 @@ onMounted(async () => {
     internEmail.value = profileResponse.data.email
 
     // Fetch attendance log details
-    const response = await axios.get(`/intern/attendance/log/${logId}`)
+    const response = await axios.get(`/intern/attendance/${logId}`)
     attendanceLog.value = response.data
 
     // Log each task and its images for debugging

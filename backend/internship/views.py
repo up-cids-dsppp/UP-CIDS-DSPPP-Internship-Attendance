@@ -162,7 +162,7 @@ def intern_details(request, intern_id):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([InternJWTAuthentication, SessionAuthentication])
-def log_face_to_face_attendance(request):
+def send_f2f_in(request):
     try:
         # Extract the email from the JWT token
         jwt_auth = JWTAuthentication()
@@ -191,25 +191,30 @@ def log_face_to_face_attendance(request):
         if not face_screenshot:
             return JsonResponse({'message': 'Face screenshot is required.'}, status=400)
 
-        # Create a new Task
-        task = Task.objects.create(
-            description="face to face - in",
-            intern_remarks="present"
-        )
-
-        # Create a new Image tied to the Task
-        image = Image.objects.create(
-            task=task,
-            file=face_screenshot  # Assuming face_screenshot is a valid file or base64-encoded image
-        )
-
-        # Create the Attendance record and associate the Task
+        # Create the Attendance record
         attendance = Attendance.objects.create(
             intern=intern,
             type='f2f',
             time_in=now
         )
-        attendance.tasks.add(task)  # Link the task to the attendance
+
+        # Create Task 1: "face to face - in"
+        task_in = Task.objects.create(
+            description="face to face - in",
+            intern_remarks="present"
+        )
+        Image.objects.create(
+            task=task_in,
+            file=face_screenshot  # Assuming face_screenshot is a valid file or base64-encoded image
+        )
+        attendance.tasks.add(task_in)  # Link the task to the attendance
+
+        # Create Task 2: "face to face - out"
+        task_out = Task.objects.create(
+            description="face to face - out",
+            intern_remarks=None  # No remarks initially
+        )
+        attendance.tasks.add(task_out)  # Link the task to the attendance
 
         return JsonResponse({'message': 'Face-to-Face attendance logged successfully.'})
     except Exception as e:
@@ -218,7 +223,7 @@ def log_face_to_face_attendance(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([InternJWTAuthentication, SessionAuthentication])
-def log_asynchronous_attendance(request):
+def send_async_in(request):
     try:
         # Extract the email from the JWT token
         jwt_auth = JWTAuthentication()
@@ -231,11 +236,6 @@ def log_asynchronous_attendance(request):
         # Restrict access for completed or dropped interns
         if intern.status in ['completed', 'dropped']:
             return JsonResponse({'message': 'You are not allowed to log attendance with your current status.'}, status=403)
-
-        # Check if the current time is within allowed hours (8 AM to 5 PM)
-        now = localtime()
-        if not (8 <= now.hour < 17):
-            return JsonResponse({'message': 'Time-in is only allowed between 8 AM and 5 PM.'}, status=403)
 
         # Check if the intern already has a "sent" attendance for the day
         today = now.date()
@@ -313,7 +313,7 @@ def attendance_log_details(request, log_id):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([InternJWTAuthentication, SessionAuthentication])
-def submit_timeout(request, log_id):
+def submit_async_out(request, log_id):
     try:
         # Extract the email from the JWT token
         jwt_auth = JWTAuthentication()
@@ -336,8 +336,8 @@ def submit_timeout(request, log_id):
 
         # Check if the current time is within allowed hours (8 AM to 5 PM)
         now = localtime()
-        if not (8 <= now.hour < 17):
-            return JsonResponse({'message': 'Timeout is only allowed between 8 AM and 5 PM.'}, status=403)
+        if not (8 <= now.hour < 17) and attendance.type == 'f2f':
+            return JsonResponse({'message': 'Timeout is only allowed between 8 AM and 5 PM for f2f attendance.'}, status=403)
 
         # Update tasks with remarks and images
         tasks_data = request.POST  # Form data for remarks
@@ -372,6 +372,57 @@ def submit_timeout(request, log_id):
         return JsonResponse({'message': 'Task not found'}, status=404)
     except Exception as e:
         print(f"Error: {str(e)}")  # Log the error for debugging
+        return JsonResponse({'message': str(e)}, status=400)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([InternJWTAuthentication, SessionAuthentication])
+def submit_f2f_out(request, log_id):
+    try:
+        # Extract the email from the JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(request.headers.get('Authorization').split()[1])
+        email = validated_token.get('email')
+
+        # Retrieve the intern using the email
+        intern = Intern.objects.get(email=email)
+
+        # Retrieve the attendance log
+        attendance = Attendance.objects.get(id=log_id, intern=intern)
+
+        # Check if the attendance log is in the "ongoing" state
+        if attendance.status != 'ongoing':
+            return JsonResponse({'message': 'You can only submit a timeout for an ongoing attendance log.'}, status=403)
+
+        # Check if the current time is within allowed hours (8 AM to 5 PM)
+        now = localtime()
+        if not (8 <= now.hour < 17):
+            return JsonResponse({'message': 'Timeout is only allowed between 8 AM and 5 PM.'}, status=403)
+
+        # Get the face screenshot for the second task
+        face_screenshot = request.data.get('faceScreenshot')
+        if not face_screenshot:
+            return JsonResponse({'message': 'Face screenshot is required for the second task.'}, status=400)
+
+        # Update the second task with the face screenshot
+        task_out = attendance.tasks.filter(description="face to face - out").first()
+        if not task_out:
+            return JsonResponse({'message': 'Task "face to face - out" not found.'}, status=404)
+
+        Image.objects.create(
+            task=task_out,
+            file=face_screenshot  # Assuming face_screenshot is a valid base64-encoded image
+        )
+
+        # Update the attendance status and time_out
+        attendance.status = 'sent'
+        attendance.time_out = now
+        attendance.save()
+
+        return JsonResponse({'message': 'Timeout submitted successfully.'}, status=200)
+    except Attendance.DoesNotExist:
+        return JsonResponse({'message': 'Attendance log not found'}, status=404)
+    except Exception as e:
         return JsonResponse({'message': str(e)}, status=400)
 
 @api_view(['GET'])
