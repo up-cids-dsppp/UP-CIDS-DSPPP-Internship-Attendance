@@ -30,7 +30,8 @@ onMounted(async () => {
     tasks.push(...attendanceLog.value.tasks.map(task => ({
       id: task.id,
       description: task.description,
-      image: task.images?.[0]?.file || null, // Use the first image if available
+      image: task.images?.[0]?.file ? `http://localhost:8000/media/${task.images[0].file}` : null, // Prefix with media URL
+      intern_remarks: task.intern_remarks || null, // Store intern remarks if available
     })))
   } catch (error) {
     console.error('Failed to fetch data:', error)
@@ -80,21 +81,41 @@ const confirmSubmit = () => {
 const handleSubmit = async () => {
   showConfirmationModal.value = false // Hide the modal after confirmation
 
-  // Validate Face-to-Face attendance
-  if (attendanceLog.value.type === 'Face-to-Face') {
-    if (!faceScreenshot.value) {
-      alert('Please take a face screenshot for the second task.')
-      return
-    }
-  }
-
-  // Prepare the payload
-  const payload = {
-    faceScreenshot: faceScreenshot.value, // Screenshot for the second task
-  }
-
   try {
-    await axios.post(`/intern/attendance/${logId}/submit/f2f`, payload)
+    if (attendanceLog.value.type === 'f2f') {
+      // Face-to-Face attendance requires a screenshot
+      if (!faceScreenshot.value) {
+        alert('Please take a face screenshot for the second task.')
+        return
+      }
+
+      // Prepare the payload for f2f timeout
+      const payload = {
+        faceScreenshot: faceScreenshot.value
+      }
+
+      // Use the f2f endpoint
+      await axios.post(`/intern/attendance/${logId}/submit/f2f`, payload)
+    } else {
+      // For async attendance, use the async endpoint
+      // Create a FormData object to handle potential file uploads
+      const formData = new FormData()
+      
+      // Add any task-specific details if needed
+      tasks.forEach(task => {
+        if (task.intern_remarks) {
+          formData.append(`tasks[${task.id}][intern_remarks]`, task.intern_remarks)
+        }
+      })
+      
+      // Use the async endpoint
+      await axios.post(`/intern/attendance/${logId}/submit/async`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+    }
+
     alert('Timeout submitted successfully!')
     router.push('/intern/home')
   } catch (error) {
@@ -130,10 +151,19 @@ const goBack = () => {
       <h2 class="text-xl font-semibold mt-4">Tasks</h2>
       <div v-for="task in tasks" :key="task.id" class="bg-gray-100 p-4 rounded-lg mt-4">
         <p><strong>Description:</strong> {{ task.description }}</p>
+
+        <!-- Display image if available -->
         <div v-if="task.image" class="mt-4">
           <p><strong>Image:</strong></p>
           <img :src="task.image" alt="Task Image" class="rounded-md" style="max-height: 150px;" />
         </div>
+
+        <!-- Display remarks for Face-to-Face In -->
+        <div v-if="task.description === 'face to face - in' && task.intern_remarks" class="mt-4">
+          <p><strong>Remarks:</strong> {{ task.intern_remarks }}</p>
+        </div>
+
+        <!-- Face-to-Face Out Screenshot -->
         <div v-else-if="task.description === 'face to face - out'" class="mt-4">
           <p><strong>Face Screenshot:</strong></p>
           <button
@@ -168,7 +198,7 @@ const goBack = () => {
     >
       <div class="bg-white p-6 rounded shadow-lg w-96">
         <h2 class="text-lg font-bold mb-4">Take Face Screenshot</h2>
-        <video id="cameraPreview" autoplay playsinline class="rounded-md"></video>
+        <video id="cameraPreview" autoplay playsinline :srcObject="videoStream" class="w-full rounded-md"></video>
         <div class="flex justify-end mt-4">
           <button
             @click="closeCameraModal"

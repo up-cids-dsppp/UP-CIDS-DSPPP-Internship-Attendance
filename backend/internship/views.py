@@ -164,7 +164,7 @@ def intern_details(request, intern_id):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([InternJWTAuthentication, SessionAuthentication])
-def send_f2f_in(request):
+def submit_f2f_in(request):
     try:
         # Extract the email from the JWT token
         jwt_auth = JWTAuthentication()
@@ -230,7 +230,7 @@ def send_f2f_in(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([InternJWTAuthentication, SessionAuthentication])
-def send_async_in(request):
+def submit_async_in(request):
     try:
         # Extract the email from the JWT token
         jwt_auth = JWTAuthentication()
@@ -411,14 +411,24 @@ def submit_f2f_out(request, log_id):
         if not face_screenshot:
             return JsonResponse({'message': 'Face screenshot is required for the second task.'}, status=400)
 
+        # Process the base64 image
+        format, imgstr = face_screenshot.split(';base64,')  # Split the Base64 string
+        ext = format.split('/')[-1]  # Extract the file extension (e.g., png, jpg)
+        image_file = ContentFile(base64.b64decode(imgstr), name=f"face_screenshot_out_{now.strftime('%Y%m%d%H%M%S')}.{ext}")
+
         # Update the second task with the face screenshot
         task_out = attendance.tasks.filter(description="face to face - out").first()
         if not task_out:
             return JsonResponse({'message': 'Task "face to face - out" not found.'}, status=404)
 
+        # Set the intern remarks to "present"
+        task_out.intern_remarks = "present"
+        task_out.save()
+
+        # Save the image to the database
         Image.objects.create(
             task=task_out,
-            file=face_screenshot  # Assuming face_screenshot is a valid base64-encoded image
+            file=image_file  # Save the decoded image file
         )
 
         # Update the attendance status and time_out
