@@ -26,6 +26,8 @@ urlpatterns = [
     path('admin/interns/<int:intern_id>/undrop', views.undrop_intern, name='undrop_intern'),
     path('admin/hash-password', views.hash_password, name='hash_password'),
     path('admin/check-password-uniqueness', views.check_password_uniqueness, name='check_password_uniqueness'),
+    path('admin/export/interns', views.export_interns_to_csv, name='export_interns_to_csv'),
+    path('admin/export/attendance', views.export_attendance_to_csv, name='export_attendance_to_csv'),
 
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

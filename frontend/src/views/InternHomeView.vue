@@ -22,6 +22,7 @@ const internDetails = ref({
 // Attendance logs
 const attendanceLogs = ref([]) // Array to store attendance logs
 const mostRecentAttendance = ref(null) // Tracks the most recent attendance log
+const timedInLog = ref(null) // Tracks the timed-in log
 
 // Sort and filter states for attendance logs
 const sortOption = ref('date-asc') // Default sort option
@@ -45,6 +46,8 @@ onMounted(async () => {
     const profileResponse = await axios.get('/intern/profile') // Fetch from the combined endpoint
     const data = profileResponse.data
 
+    console.log('TimedInID: ', timeInOutStore.timedInID)
+
     // Set intern details
     internDetails.value = {
       email: data.email,
@@ -58,29 +61,44 @@ onMounted(async () => {
 
     // Save the intern's status in the timeInOutStore
     timeInOutStore.setInternStatus(data.status)
-    console.log('Intern status:', data.status)
 
     // Set attendance logs
     attendanceLogs.value = data.attendance_logs
 
     // Determine the most recent attendance
     if (attendanceLogs.value.length > 0) {
-      mostRecentAttendance.value = attendanceLogs.value[0] // Most recent log is the first in the list
+      mostRecentAttendance.value = attendanceLogs.value[0]
 
-      // Update the store with the correct values
-      timeInOutStore.setTimedIn(mostRecentAttendance.value.status === 'ongoing')
 
-      // Compute tasks for the day from the tasks array
-      const tasks = mostRecentAttendance.value.tasks || []
-      timeInOutStore.setTasksForTheDay(Array.isArray(tasks) ? tasks.length : 0)
+      if (mostRecentAttendance.value.status === 'ongoing') {
+        timedInLog.value = await axios.get(`/intern/attendance/${mostRecentAttendance.value.id}`)
+        timeInOutStore.setTimedIn(true, mostRecentAttendance.value.id, mostRecentAttendance.value.type)
+        timeInOutStore.setTimedOutForTheDay(false)
+        timeInOutStore.setTasksForTheDay(mostRecentAttendance.value.tasks.length)
+      } else {
+        // Check if the intern has already timed out today
+        const today = new Date().toISOString().split('T')[0] // Get today's date in YYYY-MM-DD format
+        const timedOutToday = attendanceLogs.value.some(
+          (log) => log.date === today && log.time_out
+        )
+        if (timedOutToday) {
+          timeInOutStore.setTimedOutForTheDay(true)
+        } else {
+          timeInOutStore.setTimedOutForTheDay(false)
+          timeInOutStore.setTimedIn(false, null, null)
+          timeInOutStore.setTasksForTheDay(0)
+        }
+      }
     } else {
       // Reset the store if no attendance logs are found
-      timeInOutStore.setTimedIn(false)
+      timeInOutStore.setTimedIn(false, null, null)
       timeInOutStore.setTasksForTheDay(0)
+      timeInOutStore.setTimedOutForTheDay(false)
     }
   } catch (error) {
     console.error('Failed to fetch data:', error)
   }
+  console.log(timeInOutStore.isTimedIn, timeInOutStore.timedOutForTheDay, timeInOutStore.tasksForTheDay)
 })
 
 // Computed property for filtered and sorted attendance logs
@@ -148,8 +166,17 @@ const handleTimeIn = async () => {
 
 // Redirect to the time-out page with the ongoing attendance log ID
 const handleTimeOut = () => {
-  const ongoingLogId = mostRecentAttendance.value.id // Get the ongoing attendance log ID
-  router.push(`/intern/out/${ongoingLogId}`)
+
+  const ongoingLogId = timedInLog.value.data.id // Get the ongoing attendance log ID
+
+  if (mostRecentAttendance.value.type == 'f2f') {
+    router.push(`/intern/out/${ongoingLogId}/f2f`) // Redirect to the f2f time-out page
+    return
+  }
+  else if (mostRecentAttendance.value.type == 'async') {
+    router.push(`/intern/out/${ongoingLogId}/async`) // Redirect to the async time-out page
+    return
+  }
 }
 
 // Handle "View" link click

@@ -57,6 +57,38 @@ const filteredAndSortedInterns = computed(() => {
 
   return filtered
 })
+
+// Export interns to CSV
+const exportInternsToCSV = async () => {
+  try {
+    const response = await axios.get('/admin/export/interns', { responseType: 'blob' })
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'interns.csv')
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  } catch (error) {
+    console.error('Failed to export interns:', error)
+  }
+}
+
+// Export attendance to CSV
+const exportAttendanceToCSV = async () => {
+  try {
+    const response = await axios.get('/admin/export/attendance', { responseType: 'blob' })
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'attendance.csv')
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  } catch (error) {
+    console.error('Failed to export attendance:', error)
+  }
+}
 </script>
 
 <template>
@@ -73,6 +105,22 @@ const filteredAndSortedInterns = computed(() => {
           class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition"
         >
           Add new intern
+        </button>
+
+        <!-- Export Interns to CSV Button -->
+        <button 
+          @click="exportInternsToCSV" 
+          class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition"
+        >
+          Export Interns to CSV
+        </button>
+
+        <!-- Export Attendance to CSV Button -->
+        <button 
+          @click="exportAttendanceToCSV" 
+          class="bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition"
+        >
+          Export Attendance to CSV
         </button>
       </div>
 

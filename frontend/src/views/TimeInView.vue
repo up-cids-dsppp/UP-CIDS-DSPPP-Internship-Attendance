@@ -12,6 +12,7 @@ const internEmail = ref('')
 const showModal = ref(false)
 const videoStream = ref(null)
 const showConfirmationModal = ref(false) // Modal visibility for confirmation
+const errorMessage = ref('') // Error message for the modal
 
 tasks.push({ description: '' })
 
@@ -55,8 +56,19 @@ const captureImage = () => {
   closeCameraModal() // Close the modal
 }
 
+// Show confirmation modal
 const confirmSubmit = () => {
-  showConfirmationModal.value = true // Show the confirmation modal
+  // Reset the error message before showing the confirmation modal
+  errorMessage.value = ''
+
+  // Always show the confirmation modal for both attendance types
+  showConfirmationModal.value = true
+}
+
+// Reset the modal state
+const resetModal = () => {
+  showConfirmationModal.value = false
+  errorMessage.value = ''
 }
 
 // Handle form submission
@@ -72,15 +84,12 @@ const submitForm = async () => {
 
     // Check for Face-to-Face attendance
     if (attendanceType.value === 'Face-to-Face') {
-      // Validate time for F2F attendance
+      // Validate time for Face-to-Face attendance
       const now = new Date()
-      const startTime = new Date()
-      const endTime = new Date()
-      startTime.setHours(7, 30, 0) // 7:30 AM
-      endTime.setHours(17, 30, 0) // 5:30 PM
-
-      if (now < startTime || now > endTime) {
-        alert('Face-to-Face attendance can only be submitted between 7:30 AM and 5:30 PM.')
+      const currentHour = now.getHours()
+      if (currentHour < 8 || currentHour >= 17) {
+        errorMessage.value = 'You can only submit a Face-to-Face attendance from 8 AM to 5 PM.'
+        showConfirmationModal.value = true // Reopen the modal with the error message
         return
       }
 
@@ -90,9 +99,10 @@ const submitForm = async () => {
       }
 
       // Submit face-to-face attendance
-      await axios.post('/intern/attendance/f2f', {
+      const response = await axios.post('/intern/attendance/f2f', {
         faceScreenshot: faceScreenshot.value,
       })
+
     }
 
     // Check for Asynchronous attendance
@@ -110,7 +120,7 @@ const submitForm = async () => {
       }
 
       // Submit asynchronous attendance with tasks
-      await axios.post('/intern/attendance/async', {
+      const response = await axios.post('/intern/attendance/async', {
         type: 'async',
         tasks: tasks.map((task) => ({ description: task.description })),
       })
@@ -247,15 +257,17 @@ onMounted(async () => {
     >
       <div class="bg-white p-6 rounded shadow-lg w-96">
         <h2 class="text-lg font-bold mb-4">Confirm Submission</h2>
-        <p>Are you sure you want to time in?</p>
+        <p v-if="errorMessage">{{ errorMessage }}</p>
+        <p v-else>Are you sure you want to time in?</p>
         <div class="flex justify-end mt-4">
           <button
-            @click="() => (showConfirmationModal = false)"
+            @click="resetModal"
             class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 mr-2"
           >
             Cancel
           </button>
           <button
+            v-if="!errorMessage"
             @click="submitForm"
             class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
           >

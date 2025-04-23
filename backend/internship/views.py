@@ -18,6 +18,8 @@ from django.utils.timezone import now
 from django.utils.timezone import localtime
 import base64
 from django.core.files.base import ContentFile
+import csv
+from django.http import HttpResponse
 
 
 @api_view(['POST'])
@@ -245,7 +247,7 @@ def submit_async_in(request):
             return JsonResponse({'message': 'You are not allowed to log attendance with your current status.'}, status=403)
 
         # Check if the intern already has a "sent" attendance for the day
-        today = now.date()
+        today = now().date()  # Call now() to get the current datetime
         if Attendance.objects.filter(intern=intern, time_in__date=today, status='sent').exists():
             return JsonResponse({'message': 'You have already logged attendance for today.'}, status=403)
 
@@ -258,7 +260,7 @@ def submit_async_in(request):
         attendance = Attendance.objects.create(
             intern=intern,
             type='async',
-            time_in=now
+            time_in=now()  # Call now() to get the current datetime
         )
 
         # Create and link tasks to the attendance
@@ -687,3 +689,53 @@ def check_password_uniqueness(request):
             return JsonResponse({'is_unique': False})
 
     return JsonResponse({'is_unique': True})
+
+# Export interns to CSV
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@user_passes_test(lambda u: u.is_superuser)  # Ensure only admins can access
+def export_interns_to_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="interns.csv"'
+
+    writer = csv.writer(response)
+    # Include all fields except the password
+    writer.writerow(['Full Name', 'Email', 'Start Date', 'Time to Render', 'Time Rendered', 'Status', 'Admin Remarks'])
+
+    for intern in Intern.objects.all():
+        writer.writerow([
+            intern.full_name,
+            intern.email,
+            intern.start_date,
+            intern.time_to_render,
+            intern.time_rendered,
+            intern.status,
+            intern.admin_remarks
+        ])
+
+    return response
+
+# Export attendance logs to CSV
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@user_passes_test(lambda u: u.is_superuser)  # Ensure only admins can access
+def export_attendance_to_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="attendance.csv"'
+
+    writer = csv.writer(response)
+    # Include all fields except tasks
+    writer.writerow(['Intern Name', 'Type', 'Time In', 'Time Out', 'Status', 'Admin Remarks', 'Work Duration'])
+
+    for log in Attendance.objects.all():
+        writer.writerow([
+            log.intern.full_name if log.intern else 'N/A',
+            log.type,
+            log.time_in,
+            log.time_out,
+            log.status,
+            log.admin_remarks,
+            log.work_duration
+        ])
+
+    return response

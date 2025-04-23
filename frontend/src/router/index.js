@@ -9,11 +9,12 @@ import AddInternView from '@/views/AddInternView.vue'
 import UnauthenticatedView from '@/views/UnauthenticatedView.vue'
 import InternAttendanceView from '@/views/InternAttendanceView.vue'
 import TimeInView from '@/views/TimeInView.vue'
-import TimeOutView from '@/views/TimeOutView.vue'
 import AdminInternProfileView from '@/views/AdminInternProfileView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import { useTimeInOutStore } from '../stores/timeInOut'
 import AdminInternAttendanceView from '@/views/AdminInternAttendanceView.vue'
+import F2FTimeOutView from '@/views/F2FTimeOutView.vue'
+import AsyncTimeOutView from '@/views/AsyncTimeOutView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -49,9 +50,14 @@ const router = createRouter({
       component: TimeInView,
     },
     {
-      path: '/intern/out/:log_id',
-      name: 'intern_out',
-      component: TimeOutView,
+      path: '/intern/out/:log_id/f2f',
+      name: 'intern_out_f2f',
+      component: F2FTimeOutView,
+    },
+    {
+      path: '/intern/out/:log_id/async',
+      name: 'intern_out_async',
+      component: AsyncTimeOutView,
     },
     {
       path: '/admin/login',
@@ -96,6 +102,9 @@ router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
   const timeInOutStore = useTimeInOutStore()
 
+  console.log(timeInOutStore.isTimedIn, timeInOutStore.timedOutForTheDay, timeInOutStore.tasksForTheDay, timeInOutStore.currentTaskType)
+
+
   // Check if the user is logged in
   if (authStore.accessToken) {
     // Redirect to the appropriate home page based on user type
@@ -107,16 +116,40 @@ router.beforeEach(async (to, from, next) => {
       }
     }
 
+    if (timeInOutStore.timedOutForTheDay && (to.name === 'intern_in' || to.name === 'intern_out_f2f' || to.name === 'intern_out_async')) {
+      console.error('Intern has already timed out for the day')
+      return next('/unauthorized') // Redirect to unauthorized page
+    }
+
     // Restrict access to /intern/in
-    if (to.path === '/intern/in') {
-      if (timeInOutStore.isTimedIn || !timeInOutStore.canTimeInOut) {
+    if (to.name === 'intern_in') {
+      if (timeInOutStore.isTimedIn) {
+        console.error('Intern is already timed in')
         return next('/unauthorized') // Redirect to unauthorized page
       }
     }
 
     // Restrict access to /intern/out/:log_id
-    if (to.name === 'intern_out') {
+    if (to.name === 'intern_out_f2f' || to.name === 'intern_out_async') {
       if (!timeInOutStore.isTimedIn) {
+        console.error('Intern is not timed in')
+        return next('/unauthorized') // Redirect to unauthorized page
+      }
+
+      // Ensure the log ID matches the currently timed-in task
+      if (String(to.params.log_id) !== String(timeInOutStore.timedInLogId)) {
+        console.log('Route log_id:', to.params.log_id, 'Store log_id:', timeInOutStore.timedInLogId)
+        console.error('Log ID does not match the current timed-in task')
+        return next('/unauthorized') // Redirect to unauthorized page
+      }
+
+      // Restrict access based on task type
+      if (to.name === 'intern_out_f2f' && timeInOutStore.currentTaskType !== 'f2f') {
+        console.error('Task type does not match the current timed-in task')
+        return next('/unauthorized') // Redirect to unauthorized page
+      }
+      if (to.name === 'intern_out_async' && timeInOutStore.currentTaskType !== 'async') {
+        console.error('Task type does not match the current timed-in task')
         return next('/unauthorized') // Redirect to unauthorized page
       }
     }

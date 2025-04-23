@@ -1,23 +1,24 @@
 import { defineStore } from 'pinia'
-import { ref, computed, watch } from 'vue' // Add 'watch' here
+import { ref, computed } from 'vue'
 import { useAuthStore } from './auth'
 
 export const useTimeInOutStore = defineStore('timeInOut', () => {
   const authStore = useAuthStore()
   const currentUserEmail = authStore.userEmail // Get the logged-in user's email
 
-  // Helper function to get the key for localStorage
-  const getStorageKey = (key) => `${currentUserEmail}_${key}`
-
-  // Load initial state from localStorage
-  const isTimedIn = ref(JSON.parse(localStorage.getItem(getStorageKey('isTimedIn'))) || false)
-  const tasksForTheDay = ref(JSON.parse(localStorage.getItem(getStorageKey('tasksForTheDay'))) || 0)
-  const internStatus = ref(localStorage.getItem(getStorageKey('internStatus')) || '') // Load from localStorage
+  const isTimedIn = ref(false)
+  const timedInLogId = ref(null) // Store the ID of the current timed-in task
+  const timedOutForTheDay = ref(false)
+  const currentTaskType = ref(null) // F2F or Async
+  const tasksForTheDay = ref(0)
+  const internStatus = ref('')
   const attendanceLogs = ref([])
 
   // Actions to update the state
-  function setTimedIn(status) {
+  function setTimedIn(status, logId, taskType) {
     isTimedIn.value = status
+    timedInLogId.value = logId
+    currentTaskType.value = taskType
   }
 
   function setTasksForTheDay(count) {
@@ -26,18 +27,12 @@ export const useTimeInOutStore = defineStore('timeInOut', () => {
 
   const setInternStatus = (status) => {
     internStatus.value = status
-    localStorage.setItem(getStorageKey('internStatus'), status) // Persist to localStorage
     console.log('Intern status set to:', status)
   }
 
-  // Persist state to localStorage whenever it changes
-  watch(isTimedIn, (newValue) => {
-    localStorage.setItem(getStorageKey('isTimedIn'), JSON.stringify(newValue))
-  })
-
-  watch(tasksForTheDay, (newValue) => {
-    localStorage.setItem(getStorageKey('tasksForTheDay'), JSON.stringify(newValue))
-  })
+  function setTimedOutForTheDay(status) {
+    timedOutForTheDay.value = status
+  }
 
   const canTimeInOut = computed(() => {
     const now = new Date()
@@ -51,6 +46,9 @@ export const useTimeInOutStore = defineStore('timeInOut', () => {
 
   return {
     isTimedIn,
+    timedInLogId,
+    timedOutForTheDay,
+    currentTaskType,
     tasksForTheDay,
     internStatus,
     attendanceLogs,
@@ -58,5 +56,8 @@ export const useTimeInOutStore = defineStore('timeInOut', () => {
     setTimedIn,
     setTasksForTheDay,
     setInternStatus,
+    setTimedOutForTheDay,
   }
+}, {
+  persist: true, // Enable persistence for this store
 })
