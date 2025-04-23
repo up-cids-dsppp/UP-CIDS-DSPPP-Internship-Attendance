@@ -9,8 +9,6 @@ const faceScreenshot = ref(null)
 const numberOfTasks = ref(1)
 const tasks = reactive([])
 const internEmail = ref('')
-const selectedCamera = ref(null)
-const cameras = ref([])
 const showModal = ref(false)
 const videoStream = ref(null)
 const showConfirmationModal = ref(false) // Modal visibility for confirmation
@@ -23,33 +21,15 @@ const goBack = () => {
   router.push('/intern/home') // Navigates to the previous page
 }
 
-const fetchCameras = async () => {
-  try {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    const videoInputDevices = devices.filter(device => device.kind === 'videoinput');
-    cameras.value = videoInputDevices; // <-- This stores the list of cameras
-    console.log('Connected Cameras:', videoInputDevices);
-  } catch (error) {
-    console.error('Error fetching cameras:', error);
-  }
-};
-
-fetchCameras();
-
 // Open the modal and start the camera
 const openCameraModal = async () => {
-  if (!selectedCamera.value) {
-    alert('No camera selected.')
-    return
-  }
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { deviceId: { exact: selectedCamera.value } },
-    })
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true })
     videoStream.value = stream
     showModal.value = true
   } catch (error) {
     console.error('Error accessing camera:', error)
+    alert('Unable to access the camera. Please check your permissions.')
   }
 }
 
@@ -109,7 +89,7 @@ const submitForm = async () => {
         return
       }
 
-      // Submit face-to-face attendance with two tasks
+      // Submit face-to-face attendance
       await axios.post('/intern/attendance/f2f', {
         faceScreenshot: faceScreenshot.value,
       })
@@ -162,7 +142,6 @@ onMounted(async () => {
   } catch (error) {
     console.error('Failed to fetch data:', error)
   }
-  fetchCameras()
 })
 </script>
 
@@ -192,17 +171,6 @@ onMounted(async () => {
 
     <!-- Face-to-Face Section -->
     <div v-if="attendanceType === 'Face-to-Face'" class="mb-4">
-      <label for="cameraSelect" class="block mb-2">Select Camera:</label>
-      <select
-        id="cameraSelect"
-        v-model="selectedCamera"
-        class="border rounded px-4 py-2 mb-4 w-full"
-      >
-        <option v-for="camera in cameras" :key="camera.deviceId" :value="camera.deviceId">
-          {{ camera.label || `Camera ${camera.deviceId}` }}
-        </option>
-      </select>
-
       <button
         @click="openCameraModal"
         class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"

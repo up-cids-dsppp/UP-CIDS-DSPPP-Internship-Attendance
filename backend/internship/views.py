@@ -16,6 +16,8 @@ from datetime import timedelta
 from django.utils.dateformat import format
 from django.utils.timezone import now
 from django.utils.timezone import localtime
+import base64
+from django.core.files.base import ContentFile
 
 
 @api_view(['POST'])
@@ -191,6 +193,11 @@ def send_f2f_in(request):
         if not face_screenshot:
             return JsonResponse({'message': 'Face screenshot is required.'}, status=400)
 
+        # Decode the Base64 string and save it as a file
+        format, imgstr = face_screenshot.split(';base64,')  # Split the Base64 string
+        ext = format.split('/')[-1]  # Extract the file extension (e.g., png, jpg)
+        image_file = ContentFile(base64.b64decode(imgstr), name=f"face_screenshot_{now.strftime('%Y%m%d%H%M%S')}.{ext}")
+
         # Create the Attendance record
         attendance = Attendance.objects.create(
             intern=intern,
@@ -205,7 +212,7 @@ def send_f2f_in(request):
         )
         Image.objects.create(
             task=task_in,
-            file=face_screenshot  # Assuming face_screenshot is a valid file or base64-encoded image
+            file=image_file  # Save the decoded image file
         )
         attendance.tasks.add(task_in)  # Link the task to the attendance
 
