@@ -221,7 +221,13 @@ const viewAttendanceLog = (logId) => {
       <div
         :class="[
           'text-white p-4 mt-4 rounded-lg max-w-md',
-          hasTimedOutAttendanceToday ? 'bg-gray-500' : (canTimeInOut ? (timeInOutStore.isTimedIn ? 'bg-red-500' : 'bg-green-500') : 'bg-gray-500')
+          hasTimedOutAttendanceToday
+            ? 'bg-gray-500'
+            : canTimeInOut
+            ? timeInOutStore.isTimedIn
+              ? 'bg-red-500'
+              : 'bg-green-500'
+            : 'bg-gray-500'
         ]"
       >
         <p class="text-lg font-semibold">Today's Date: {{ currentDate }}</p>
@@ -230,24 +236,29 @@ const viewAttendanceLog = (logId) => {
           Tasks to accomplish: {{ timeInOutStore.tasksForTheDay }}
         </p>
         <div class="flex justify-end mt-4">
-          <template v-if="canTimeInOut">
-            <button
-              v-if="!timeInOutStore.isTimedIn"
-              @click="handleTimeIn"
-              class="bg-white text-green-500 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
-            >
-              Time In
-            </button>
-            <button
-              v-else
-              @click="handleTimeOut"
-              class="bg-white text-red-500 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
-            >
-              Time Out
-            </button>
+          <template v-if="internDetails.status !== 'completed' && internDetails.status !== 'dropped'">
+            <template v-if="canTimeInOut">
+              <button
+                v-if="!timeInOutStore.isTimedIn"
+                @click="handleTimeIn"
+                class="bg-white text-green-500 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
+              >
+                Time In
+              </button>
+              <button
+                v-else
+                @click="handleTimeOut"
+                class="bg-white text-red-500 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
+              >
+                Time Out
+              </button>
+            </template>
+            <template v-else>
+              <p class="text-lg font-semibold">Cannot Time In/Out</p>
+            </template>
           </template>
           <template v-else>
-            <p class="text-lg font-semibold">Cannot Time In/Out</p>
+            <p class="text-lg font-semibold">Time In/Out is disabled for your status.</p>
           </template>
         </div>
       </div>

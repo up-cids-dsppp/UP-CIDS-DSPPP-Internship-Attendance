@@ -21,6 +21,10 @@ const errors = ref({}) // Validation errors
 const showFeedbackConfirmation = ref(false); // Feedback confirmation modal
 const showEvaluationConfirmation = ref(false); // Evaluation confirmation modal
 
+// State for image modal
+const selectedImage = ref(null) // Store the currently selected image
+const showImageModal = ref(false) // Control image modal visibility
+
 const goBack = () => {
   router.push(`/admin/interns/${internId}`) // Navigates to the previous page
 }
@@ -144,6 +148,18 @@ const getStatusColor = (status) => {
       return 'text-gray-500'
   }
 }
+
+// Function to open the image modal
+const openImageModal = (image) => {
+  selectedImage.value = image
+  showImageModal.value = true
+}
+
+// Function to close the image modal
+const closeImageModal = () => {
+  selectedImage.value = null
+  showImageModal.value = false
+}
 </script>
 
 <template>
@@ -211,8 +227,9 @@ const getStatusColor = (status) => {
                   :key="image.id"
                   :src="`${'http://localhost:8000/media/'}${image.file}`"
                   alt="Task Image"
-                  class="rounded-md"
+                  class="rounded-md cursor-pointer hover:opacity-80 transition"
                   style="max-height: 150px;"
+                  @click="openImageModal(`${'http://localhost:8000/media/'}${image.file}`)"
                 />
               </div>
             </div>
@@ -373,6 +390,26 @@ const getStatusColor = (status) => {
             Confirm
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div 
+      v-if="showImageModal" 
+      class="fixed inset-0 bg-black/30 flex items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-lg p-4 relative max-w-7xl w-full">
+        <button 
+          @click="closeImageModal" 
+          class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-5xl"
+        >
+          &times;
+        </button>
+        <img 
+          :src="selectedImage" 
+          alt="Selected Image" 
+          class="w-full h-auto rounded-lg"
+        />
       </div>
     </div>
   </div>

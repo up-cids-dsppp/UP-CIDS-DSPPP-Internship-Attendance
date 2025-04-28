@@ -11,6 +11,10 @@ const logId = route.params.id // Get the log ID from the route parameter
 const attendanceLog = ref(null) // Store the attendance log details
 const internEmail = ref('') // Intern email
 
+// State for image modal
+const selectedImage = ref(null) // Store the currently selected image
+const showImageModal = ref(false) // Control image modal visibility
+
 const goBack = () => {
   router.push('/intern/home') // Navigates to the previous page
 }
@@ -62,14 +66,26 @@ const getStatusColor = (status) => {
       return 'text-gray-500'
   }
 }
+
+// Function to open the image modal
+const openImageModal = (image) => {
+  selectedImage.value = image
+  showImageModal.value = true
+}
+
+// Function to close the image modal
+const closeImageModal = () => {
+  selectedImage.value = null
+  showImageModal.value = false
+}
 </script>
 
 <template>
   <NavBar userType="intern" :userEmail="internEmail" />
   <div class="p-6">
     <p 
-    @click="goBack" 
-    class="mb-4 text-gray-500 underline cursor-pointer hover:text-gray-700"
+      @click="goBack" 
+      class="mb-4 text-gray-500 underline cursor-pointer hover:text-gray-700"
     >
       Go back
     </p>
@@ -99,8 +115,9 @@ const getStatusColor = (status) => {
                 :key="image.id"
                 :src="`${'http://localhost:8000/media/'}${image.file}`"
                 alt="Task Image"
-                class="rounded-md"
+                class="rounded-md cursor-pointer hover:opacity-80 transition"
                 style="max-height: 150px;"
+                @click="openImageModal(`${'http://localhost:8000/media/'}${image.file}`)"
               />
             </div>
           </div>
@@ -110,5 +127,25 @@ const getStatusColor = (status) => {
       <div v-else class="text-gray-500">Loading tasks...</div>
     </div>
     <div v-else class="text-gray-500">Loading attendance log details...</div>
+
+    <!-- Image Modal -->
+    <div 
+      v-if="showImageModal" 
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-lg p-6 relative max-w-7xl w-full">
+        <button 
+          @click="closeImageModal" 
+          class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-5xl"
+        >
+          &times;
+        </button>
+        <img 
+          :src="selectedImage" 
+          alt="Selected Image" 
+          class="w-full h-auto max-h-[80vh] rounded-lg object-contain"
+        />
+      </div>
+    </div>
   </div>
 </template>
