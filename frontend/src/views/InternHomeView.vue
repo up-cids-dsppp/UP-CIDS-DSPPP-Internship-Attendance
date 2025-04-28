@@ -19,11 +19,6 @@ const internDetails = ref({
   admin_remarks: '',
 })
 
-// Attendance logs
-const attendanceLogs = ref([]) // Array to store attendance logs
-const mostRecentAttendance = ref(null) // Tracks the most recent attendance log
-const timedInLog = ref(null) // Tracks the timed-in log
-
 // Sort and filter states for attendance logs
 const sortOption = ref('date-asc') // Default sort option
 const selectedStatuses = ref(['validated', 'flagged', 'sent', 'ongoing']) // Default status filter
@@ -46,8 +41,6 @@ onMounted(async () => {
     const profileResponse = await axios.get('/intern/profile') // Fetch from the combined endpoint
     const data = profileResponse.data
 
-    console.log('TimedInID: ', timeInOutStore.timedInID)
-
     // Set intern details
     internDetails.value = {
       email: data.email,
@@ -63,31 +56,36 @@ onMounted(async () => {
     timeInOutStore.setInternStatus(data.status)
 
     // Set attendance logs
-    attendanceLogs.value = data.attendance_logs
+    timeInOutStore.attendanceLogs = data.attendance_logs
 
     // Determine the most recent attendance
-    if (attendanceLogs.value.length > 0) {
-      mostRecentAttendance.value = attendanceLogs.value[0]
+    if (timeInOutStore.attendanceLogs.length > 0) {
+      const mostRecent = timeInOutStore.attendanceLogs[0]
+      timeInOutStore.setMostRecentAttendance(mostRecent)
 
-
-      if (mostRecentAttendance.value.status === 'ongoing') {
-        timedInLog.value = await axios.get(`/intern/attendance/${mostRecentAttendance.value.id}`)
-        timeInOutStore.setTimedIn(true, mostRecentAttendance.value.id, mostRecentAttendance.value.type)
+      if (mostRecent.status === 'ongoing') {
+        const timedInLog = await axios.get(`/intern/attendance/${mostRecent.id}`)
+        timeInOutStore.setTimedIn(true, mostRecent.id, mostRecent.type)
         timeInOutStore.setTimedOutForTheDay(false)
-        timeInOutStore.setTasksForTheDay(mostRecentAttendance.value.tasks.length)
+        if (timedInLog.data.type == 'async') {
+          timeInOutStore.setTasksForTheDay(timedInLog.data.tasks.length)
+        } else {
+          timeInOutStore.setTasksForTheDay(timedInLog.data.tasks.length - 1)
+        }
+        timeInOutStore.setTimedInLog(timedInLog.data)
       } else {
         // Check if the intern has already timed out today
         const today = new Date().toISOString().split('T')[0] // Get today's date in YYYY-MM-DD format
-        const timedOutToday = attendanceLogs.value.some(
+        const timedOutToday = timeInOutStore.attendanceLogs.some(
           (log) => log.date === today && log.time_out
         )
         if (timedOutToday) {
           timeInOutStore.setTimedOutForTheDay(true)
         } else {
           timeInOutStore.setTimedOutForTheDay(false)
-          timeInOutStore.setTimedIn(false, null, null)
-          timeInOutStore.setTasksForTheDay(0)
         }
+        timeInOutStore.setTimedIn(false, null, null)
+        timeInOutStore.setTasksForTheDay(0)
       }
     } else {
       // Reset the store if no attendance logs are found
@@ -98,13 +96,12 @@ onMounted(async () => {
   } catch (error) {
     console.error('Failed to fetch data:', error)
   }
-  console.log(timeInOutStore.isTimedIn, timeInOutStore.timedOutForTheDay, timeInOutStore.tasksForTheDay)
 })
 
 // Computed property for filtered and sorted attendance logs
 const filteredAndSortedLogs = computed(() => {
   // Filter by selected statuses and types
-  let filtered = attendanceLogs.value.filter(
+  let filtered = timeInOutStore.attendanceLogs.filter(
     (log) =>
       selectedStatuses.value.includes(log.status) &&
       selectedTypes.value.includes(log.type)
@@ -126,37 +123,26 @@ const filteredAndSortedLogs = computed(() => {
 
 // Computed property to check if there are flagged tasks
 const hasFlaggedTasks = computed(() => {
-  return attendanceLogs.value.some(log => log.status === 'flagged');
-});
-
-// Check if the current time is within 8 AM to 5 PM Philippine local time
-const isWithinAllowedTime = computed(() => {
-  const now = new Date()
-  const currentHour = now.getHours()
-  return currentHour >= 8 && currentHour < 17 // 8 AM to 5 PM
+  return timeInOutStore.attendanceLogs.some((log) => log.status === 'flagged')
 })
 
-// Check if there is already a "sent" attendance for the day
-const hasSentAttendanceToday = computed(() => {
-  const today = new Date().toISOString().split('T')[0] // Get today's date in YYYY-MM-DD format
-  return attendanceLogs.value.some(
-    (log) => log.date === today && log.status === 'sent'
+// Computed property to check if the intern has timed out today
+const hasTimedOutAttendanceToday = computed(() => {
+  const today = new Date().toISOString().split('T')[0]
+  return timeInOutStore.attendanceLogs.some(
+    (log) => log.date === today && log.time_out
   )
 })
 
-// Check if there is already a timed-out attendance for today
-const hasTimedOutAttendanceToday = computed(() => {
-  const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
-  return attendanceLogs.value.some(
-    (log) => log.date === today && log.time_out // Check if time_out exists for today's date
-  );
-});
-
-// Determine if time-in/out is allowed
+// Computed property to check if the intern can time in or out
 const canTimeInOut = computed(() => {
-  // Check if the intern's status is not "dropped" or "completed"
-  const isStatusAllowed = internDetails.value.status !== 'dropped' && internDetails.value.status !== 'completed';
-  return isStatusAllowed && !hasTimedOutAttendanceToday.value; // Combine with the timed-out check
+  const now = new Date()
+  const currentHour = now.getHours()
+  const today = new Date().toISOString().split('T')[0]
+  const hasSentAttendance = timeInOutStore.attendanceLogs.some(
+    (log) => log.date === today && log.status === 'sent'
+  )
+  return currentHour >= 8 && currentHour < 17 && !hasSentAttendance
 })
 
 // Handle "Time In" button click
@@ -166,14 +152,12 @@ const handleTimeIn = async () => {
 
 // Redirect to the time-out page with the ongoing attendance log ID
 const handleTimeOut = () => {
+  const ongoingLogId = timeInOutStore.timedInLog.id // Get the ongoing attendance log ID
 
-  const ongoingLogId = timedInLog.value.data.id // Get the ongoing attendance log ID
-
-  if (mostRecentAttendance.value.type == 'f2f') {
+  if (timeInOutStore.mostRecentAttendance.type === 'f2f') {
     router.push(`/intern/out/${ongoingLogId}/f2f`) // Redirect to the f2f time-out page
     return
-  }
-  else if (mostRecentAttendance.value.type == 'async') {
+  } else if (timeInOutStore.mostRecentAttendance.type === 'async') {
     router.push(`/intern/out/${ongoingLogId}/async`) // Redirect to the async time-out page
     return
   }
@@ -183,6 +167,7 @@ const handleTimeOut = () => {
 const viewAttendanceLog = (logId) => {
   router.push(`/intern/attendance/${logId}`) // Redirect to the attendance log details page
 }
+
 </script>
 
 <template>

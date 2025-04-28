@@ -492,6 +492,10 @@ def attendance_feedback(request, log_id):
         # Retrieve the attendance log by ID
         attendance = Attendance.objects.get(id=log_id)
 
+        # Check if the attendance status is 'sent'
+        if attendance.status != 'sent':
+            return JsonResponse({'message': 'Feedback can only be submitted for attendance logs with a status of "sent".'}, status=400)
+
         # Extract feedback data from the request
         feedback_type = request.data.get('type')
         feedback_remarks = request.data.get('admin_remarks')
@@ -530,6 +534,9 @@ def evaluate_attendance(request, log_id):
     try:
         # Retrieve the attendance log by ID
         attendance = Attendance.objects.get(id=log_id)
+
+        if attendance.status != 'flagged':
+            return JsonResponse({'message': 'Attendance log must be flagged before re-evaluation.'}, status=400)
 
         # Extract evaluation data from the request
         duration = request.data.get('duration')

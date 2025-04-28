@@ -255,7 +255,7 @@ const showConfirmationModal = ref(false); // Control confirmation modal visibili
   <!-- Confirmation Modal -->
   <div 
     v-if="showConfirmationModal" 
-    class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
+    class="fixed inset-0 bg-black/30 flex items-center justify-center z-50"
   >
     <div class="bg-white rounded-lg p-6 w-[400px] relative">
       <h2 class="text-xl font-bold mb-4">Confirm Submission</h2>

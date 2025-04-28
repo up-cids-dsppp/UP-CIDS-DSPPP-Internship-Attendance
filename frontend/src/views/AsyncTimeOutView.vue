@@ -175,7 +175,7 @@ const goBack = () => {
     </button>
 
     <!-- Confirmation Modal -->
-    <div v-if="showConfirmationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div v-if="showConfirmationModal" class="fixed inset-0 bg-black/30 flex items-center justify-center">
       <div class="bg-white p-6 rounded-lg shadow-lg">
         <h2 class="text-lg font-bold mb-4">Confirm Submission</h2>
         <p>Are you sure you want to submit the timeout form?</p>

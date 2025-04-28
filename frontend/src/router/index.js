@@ -102,7 +102,7 @@ router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
   const timeInOutStore = useTimeInOutStore()
 
-  console.log(timeInOutStore.isTimedIn, timeInOutStore.timedOutForTheDay, timeInOutStore.tasksForTheDay, timeInOutStore.currentTaskType)
+  console.log(timeInOutStore.isTimedIn, timeInOutStore.timedOutForTheDay, timeInOutStore.tasksForTheDay, timeInOutStore.currentLogType)
 
 
   // Check if the user is logged in
@@ -144,11 +144,11 @@ router.beforeEach(async (to, from, next) => {
       }
 
       // Restrict access based on task type
-      if (to.name === 'intern_out_f2f' && timeInOutStore.currentTaskType !== 'f2f') {
+      if (to.name === 'intern_out_f2f' && timeInOutStore.currentLogType !== 'f2f') {
         console.error('Task type does not match the current timed-in task')
         return next('/unauthorized') // Redirect to unauthorized page
       }
-      if (to.name === 'intern_out_async' && timeInOutStore.currentTaskType !== 'async') {
+      if (to.name === 'intern_out_async' && timeInOutStore.currentLogType !== 'async') {
         console.error('Task type does not match the current timed-in task')
         return next('/unauthorized') // Redirect to unauthorized page
       }

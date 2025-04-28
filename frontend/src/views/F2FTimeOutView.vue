@@ -111,10 +111,6 @@ const handleSubmit = async () => {
       })
     }
 
-    // Set timed-out state in the store
-    timeInOutStore.setTimedOutForTheDay(true)
-    timeInOutStore.setTimedIn(false, null, null)
-
     alert('Timeout submitted successfully!')
     router.push('/intern/home')
   } catch (error) {
@@ -170,7 +166,7 @@ const handleSubmit = async () => {
     <!-- Camera Modal -->
     <div
       v-if="showModal"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+      class="fixed inset-0 bg-black/30 flex items-center justify-center"
     >
       <div class="bg-white p-6 rounded shadow-lg w-96">
         <h2 class="text-lg font-bold mb-4">Take Face Screenshot</h2>
@@ -195,7 +191,7 @@ const handleSubmit = async () => {
     <!-- Confirmation Modal -->
     <div
       v-if="showConfirmationModal"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+      class="fixed inset-0 bg-black/30 flex items-center justify-center"
     >
       <div class="bg-white p-6 rounded shadow-lg w-96">
         <h2 class="text-lg font-bold mb-4">Confirm Submission</h2>

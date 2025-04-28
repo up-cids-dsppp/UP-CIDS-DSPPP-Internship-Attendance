@@ -210,7 +210,7 @@ const goBack = () => {
       <!-- Delete Confirmation Modal -->
       <div 
         v-if="showDeleteModal" 
-        class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
+        class="fixed inset-0 bg-black/30 flex items-center justify-center z-50"
       >
         <div class="bg-white rounded-lg p-6 w-[400px] relative">
           <button 
@@ -270,7 +270,7 @@ const goBack = () => {
       <!-- Evaluation Modal -->
       <div 
         v-if="showEvaluationModal" 
-        class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
+        class="fixed inset-0 bg-black/30 flex items-center justify-center z-50"
       >
         <div class="bg-white rounded-lg p-6 w-[600px] relative">
           <button 
@@ -317,7 +317,7 @@ const goBack = () => {
       <!-- Evaluation Confirmation Modal -->
       <div 
         v-if="showEvaluationConfirmationModal" 
-        class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
+        class="fixed inset-0 bg-black/30 flex items-center justify-center z-50"
       >
         <div class="bg-white rounded-lg p-6 w-[400px] relative">
           <button 
@@ -352,7 +352,7 @@ const goBack = () => {
       <!-- Undrop Confirmation Modal -->
       <div 
         v-if="showUndropModal" 
-        class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
+        class="fixed inset-0 bg-black/30 flex items-center justify-center z-50"
       >
         <div class="bg-white rounded-lg p-6 w-[400px] relative">
           <button 

@@ -227,7 +227,7 @@ const getStatusColor = (status) => {
     <!-- Feedback Modal -->
     <div 
       v-if="showModal" 
-      class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
+      class="fixed inset-0 bg-black/30 flex items-center justify-center z-50"
     >
       <div class="bg-white rounded-lg p-6 w-[600px] relative">
         <button 
@@ -274,7 +274,7 @@ const getStatusColor = (status) => {
     <!-- Feedback Confirmation Modal -->
     <div 
       v-if="showFeedbackConfirmation" 
-      class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
+      class="fixed inset-0 bg-black/30 flex items-center justify-center z-50"
     >
       <div class="bg-white rounded-lg p-6 w-[400px] relative">
         <h2 class="text-xl font-bold mb-4">Confirm Feedback Submission</h2>
@@ -299,7 +299,7 @@ const getStatusColor = (status) => {
     <!-- Evaluation Modal -->
     <div 
       v-if="evaluationModal" 
-      class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
+      class="fixed inset-0 bg-black/30 flex items-center justify-center z-50"
     >
       <div class="bg-white rounded-lg p-6 w-[600px] relative">
         <button 
@@ -354,7 +354,7 @@ const getStatusColor = (status) => {
     <!-- Evaluation Confirmation Modal -->
     <div 
       v-if="showEvaluationConfirmation" 
-      class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
+      class="fixed inset-0 bg-black/30 flex items-center justify-center z-50"
     >
       <div class="bg-white rounded-lg p-6 w-[400px] relative">
         <h2 class="text-xl font-bold mb-4">Confirm Evaluation Submission</h2>

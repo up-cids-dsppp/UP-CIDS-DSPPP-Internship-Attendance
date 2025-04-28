@@ -197,7 +197,7 @@ onMounted(async () => {
     <!-- Modal for Camera Preview -->
     <div
       v-if="showModal"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+      class="fixed inset-0 bg-black/30 flex items-center justify-center"
     >
       <div class="bg-white p-4 rounded shadow-lg w-96">
         <h2 class="text-lg font-bold mb-4">Camera Preview</h2>
@@ -253,7 +253,7 @@ onMounted(async () => {
     <!-- Confirmation Modal -->
     <div
       v-if="showConfirmationModal"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+      class="fixed inset-0 bg-black/30 flex items-center justify-center"
     >
       <div class="bg-white p-6 rounded shadow-lg w-96">
         <h2 class="text-lg font-bold mb-4">Confirm Submission</h2>

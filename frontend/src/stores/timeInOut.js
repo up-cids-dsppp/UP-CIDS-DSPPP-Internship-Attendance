@@ -9,16 +9,18 @@ export const useTimeInOutStore = defineStore('timeInOut', () => {
   const isTimedIn = ref(false)
   const timedInLogId = ref(null) // Store the ID of the current timed-in task
   const timedOutForTheDay = ref(false)
-  const currentTaskType = ref(null) // F2F or Async
+  const currentLogType = ref(null) // F2F or Async
   const tasksForTheDay = ref(0)
   const internStatus = ref('')
   const attendanceLogs = ref([])
+  const mostRecentAttendance = ref(null) // Tracks the most recent attendance log
+  const timedInLog = ref(null) // Tracks the timed-in log
 
   // Actions to update the state
-  function setTimedIn(status, logId, taskType) {
+  function setTimedIn(status, logId, logType) {
     isTimedIn.value = status
     timedInLogId.value = logId
-    currentTaskType.value = taskType
+    currentLogType.value = logType
   }
 
   function setTasksForTheDay(count) {
@@ -32,6 +34,14 @@ export const useTimeInOutStore = defineStore('timeInOut', () => {
 
   function setTimedOutForTheDay(status) {
     timedOutForTheDay.value = status
+  }
+
+  function setMostRecentAttendance(attendance) {
+    mostRecentAttendance.value = attendance
+  }
+
+  function setTimedInLog(log) {
+    timedInLog.value = log
   }
 
   const canTimeInOut = computed(() => {
@@ -48,15 +58,19 @@ export const useTimeInOutStore = defineStore('timeInOut', () => {
     isTimedIn,
     timedInLogId,
     timedOutForTheDay,
-    currentTaskType,
+    currentLogType,
     tasksForTheDay,
     internStatus,
     attendanceLogs,
+    mostRecentAttendance,
+    timedInLog,
     canTimeInOut,
     setTimedIn,
     setTasksForTheDay,
     setInternStatus,
     setTimedOutForTheDay,
+    setMostRecentAttendance,
+    setTimedInLog,
   }
 }, {
   persist: true, // Enable persistence for this store
