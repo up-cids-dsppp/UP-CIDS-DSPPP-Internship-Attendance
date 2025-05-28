@@ -51,7 +51,7 @@ export const useTimeInOutStore = defineStore('timeInOut', () => {
     const hasSentAttendance = attendanceLogs.value.some(
       (log) => log.date === today && log.status === 'sent'
     )
-    return currentHour >= 8 && currentHour < 17 && !hasSentAttendance
+    return currentHour >= 8 && currentHour < 19 && !hasSentAttendance
   })
 
   return {

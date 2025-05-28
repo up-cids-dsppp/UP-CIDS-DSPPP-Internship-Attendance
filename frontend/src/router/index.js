@@ -97,6 +97,13 @@ const router = createRouter({
   ],
 })
 
+// Add this helper at the top of your router file
+function isWithinAllowedTime() {
+  const now = new Date()
+  const hour = now.getHours()
+  return hour >= 8 && hour < 19
+}
+
 // Add a global navigation guard
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
@@ -151,6 +158,17 @@ router.beforeEach(async (to, from, next) => {
       if (to.name === 'intern_out_async' && timeInOutStore.currentLogType !== 'async') {
         console.error('Task type does not match the current timed-in task')
         return next('/unauthorized') // Redirect to unauthorized page
+      }
+    }
+
+    if (
+      to.name === 'intern_in' ||
+      to.name === 'intern_out_f2f' ||
+      to.name === 'intern_out_async'
+    ) {
+      if (!isWithinAllowedTime()) {
+        console.error('Time In/Out is only allowed from 8:00 AM to 7:00 PM')
+        return next('/unauthorized')
       }
     }
 
