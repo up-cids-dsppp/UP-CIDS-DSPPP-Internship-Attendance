@@ -20,6 +20,9 @@ import base64
 from django.core.files.base import ContentFile
 import csv
 from django.http import HttpResponse
+from django.core.mail import send_mail
+from django.conf import settings
+from django.db import IntegrityError
 
 
 @api_view(['POST'])
@@ -70,7 +73,7 @@ def admin_profile(request):
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
-@user_passes_test(lambda u: u.is_superuser)  # Ensure only admins can access
+@user_passes_test(lambda u: u.is_superuser)
 def manage_interns(request):
     if request.method == 'GET':
         interns = Intern.objects.all().values(
@@ -85,14 +88,36 @@ def manage_interns(request):
     elif request.method == 'POST':
         data = request.data
         hours = int(data['time_to_render'])  # Convert hours to an integer
-        intern = Intern.objects.create(
-            full_name=data['full_name'],
-            email=data['email'],
-            password=data['password'],
-            start_date=data['start_date'],
-            time_to_render=timedelta(hours=hours),  # Convert hours to timedelta
-        )
-        return JsonResponse({'message': 'Intern added successfully', 'id': intern.id})
+        if Intern.objects.filter(email=data['email']).exists():
+            return JsonResponse({'message': 'An intern with this email already exists.'}, status=400)
+        try:
+            # Compose the email body
+            email_body = (
+                "Please check if your details are correct. Take note of your password. "
+                "If you have any concerns, Please email your internship supervisor.\n\n"
+                f"Full Name: {data['full_name']}\n"
+                f"Email: {data['email']}\n"
+                f"Password: {data['password']}\n"
+                f"Start Date: {data['start_date']}\n"
+                f"Time to Render: {hours} hours\n"
+            )
+            send_mail(
+                subject='Your Internship Account Details',
+                message=email_body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[data['email']],
+                fail_silently=False,
+            )
+            intern = Intern.objects.create(
+                full_name=data['full_name'],
+                email=data['email'],
+                password=data['password'],
+                start_date=data['start_date'],
+                time_to_render=timedelta(hours=hours),  # Convert hours to timedelta
+            )
+            return JsonResponse({'message': 'Intern added successfully', 'id': intern.id})
+        except IntegrityError:
+            return JsonResponse({'message': 'An intern with this email already exists.'}, status=400)
 
 @api_view(['GET', 'DELETE', 'PUT'])
 @permission_classes([IsAuthenticated])
@@ -142,8 +167,27 @@ def intern_details(request, intern_id):
             data = request.data
             intern.full_name = data.get('full_name', intern.full_name)
             intern.email = data.get('email', intern.email)
+            password_plain = None
+            # Compose the email body
+            email_body = (
+                "Please check if your details are correct. Take note of your password. "
+                "If you have any concerns, Please email your internship supervisor.\n\n"
+                f"Full Name: {intern.full_name}\n"
+                f"Email: {intern.email}\n"
+                f"Password: {password_plain if password_plain else '[unchanged]'}\n"
+                f"Start Date: {intern.start_date}\n"
+                f"Time to Render: {int(intern.time_to_render.total_seconds() // 3600)} hours\n"
+            )
+            send_mail(
+                subject='Your Internship Account Details Updated',
+                message=email_body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[intern.email],
+                fail_silently=False,
+            )
             if 'password' in data and data['password']:  # Only update if password is provided
                 intern.password = make_password(data['password'])  # Hash the new password
+                password_plain = data['password']
             intern.start_date = data.get('start_date', intern.start_date)
             intern.time_to_render = timedelta(hours=int(data['time_to_render']))
             intern.save()

@@ -78,6 +78,8 @@ const closeImageModal = () => {
   selectedImage.value = null
   showImageModal.value = false
 }
+
+const mediaBaseUrl = import.meta.env.VITE_MEDIA_BASE_URL
 </script>
 
 <template>
@@ -113,11 +115,11 @@ const closeImageModal = () => {
               <img
                 v-for="image in task.images"
                 :key="image.id"
-                :src="`${'http://localhost:8000/media/'}${image.file}`"
+                :src="`${mediaBaseUrl}${image.file}`"
                 alt="Task Image"
                 class="rounded-md cursor-pointer hover:opacity-80 transition"
                 style="max-height: 150px;"
-                @click="openImageModal(`${'http://localhost:8000/media/'}${image.file}`)"
+                @click="openImageModal(`${mediaBaseUrl}${image.file}`)"
               />
             </div>
           </div>

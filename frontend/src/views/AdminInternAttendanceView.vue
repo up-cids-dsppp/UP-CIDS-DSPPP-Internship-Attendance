@@ -20,6 +20,7 @@ const maxDuration = ref(0) // Maximum duration
 const errors = ref({}) // Validation errors
 const showFeedbackConfirmation = ref(false); // Feedback confirmation modal
 const showEvaluationConfirmation = ref(false); // Evaluation confirmation modal
+const mediaBaseUrl = import.meta.env.VITE_MEDIA_BASE_URL
 
 // State for image modal
 const selectedImage = ref(null) // Store the currently selected image
@@ -225,11 +226,11 @@ const closeImageModal = () => {
                 <img
                   v-for="image in task.images"
                   :key="image.id"
-                  :src="`${'http://localhost:8000/media/'}${image.file}`"
+                  :src="`${mediaBaseUrl}${image.file}`"
                   alt="Task Image"
                   class="rounded-md cursor-pointer hover:opacity-80 transition"
                   style="max-height: 150px;"
-                  @click="openImageModal(`${'http://localhost:8000/media/'}${image.file}`)"
+                  @click="openImageModal(`${mediaBaseUrl}${image.file}`)"
                 />
               </div>
             </div>
