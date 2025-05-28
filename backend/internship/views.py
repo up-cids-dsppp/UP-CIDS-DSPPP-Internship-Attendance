@@ -290,6 +290,11 @@ def submit_async_in(request):
         if intern.status in ['completed', 'dropped']:
             return JsonResponse({'message': 'You are not allowed to log attendance with your current status.'}, status=403)
 
+        # Check if the current time is within allowed hours (8 AM to 7 PM)
+        now_dt = localtime()
+        if not (8 <= now_dt.hour < 19):
+            return JsonResponse({'message': 'Async time-in is only allowed between 8 AM and 7 PM.'}, status=403)
+
         # Check if the intern already has a "sent" attendance for the day
         today = now().date()  # Call now() to get the current datetime
         if Attendance.objects.filter(intern=intern, time_in__date=today, status='sent').exists():
@@ -316,53 +321,6 @@ def submit_async_in(request):
     except Exception as e:
         return JsonResponse({'message': str(e)}, status=400)
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-@authentication_classes([InternJWTAuthentication, SessionAuthentication])
-def attendance_log_details(request, log_id):
-    try:
-        # Extract the email from the JWT token
-        jwt_auth = JWTAuthentication()
-        validated_token = jwt_auth.get_validated_token(request.headers.get('Authorization').split()[1])
-        email = validated_token.get('email')
-
-        # Retrieve the intern using the email
-        intern = Intern.objects.get(email=email)
-
-        # Retrieve the specific attendance log and ensure it belongs to the logged-in intern
-        attendance = Attendance.objects.get(id=log_id, intern=intern)
-
-# Retrieve associated tasks
-        tasks = attendance.tasks.all()
-        tasks_data = []
-        for task in tasks:
-            images = task.images.all().values('id', 'file')
-            tasks_data.append({
-                'id': task.id,
-                'description': task.description,
-                'intern_remarks': task.intern_remarks,
-                'images': list(images),
-            })
-
-        # Format the response
-        response_data = {
-            'id': attendance.id,
-            'type': attendance.type,
-            'status': attendance.status,
-            'date': format(localtime(attendance.time_in), 'Y-m-d'),
-            'time_in': format(localtime(attendance.time_in), 'H:i:s'),
-            'time_out': format(localtime(attendance.time_out), 'H:i:s') if attendance.time_out else None,
-            'tasks': tasks_data,
-            'admin_remarks': attendance.admin_remarks,
-            'work_duration': attendance.work_duration.total_seconds() / 3600 if attendance.work_duration else 0,  # Convert to hours
-        }
-
-        return JsonResponse(response_data)
-    except Attendance.DoesNotExist:
-        return JsonResponse({'message': 'Attendance log not found or unauthorized access'}, status=403)
-    except Exception as e:
-        return JsonResponse({'message': str(e)}, status=400)
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([InternJWTAuthentication, SessionAuthentication])
@@ -380,6 +338,11 @@ def submit_async_out(request, log_id):
         if intern.status in ['completed', 'dropped']:
             return JsonResponse({'message': 'You are not allowed to submit a timeout with your current status.'}, status=403)
 
+        # Check if the current time is within allowed hours (8 AM to 7 PM)
+        now = localtime()
+        if not (8 <= now.hour < 19):
+            return JsonResponse({'message': 'Timeout is only allowed between 8 AM and 7 PM.'}, status=403)
+
         # Retrieve the attendance log
         attendance = Attendance.objects.get(id=log_id, intern=intern)
 
@@ -387,10 +350,10 @@ def submit_async_out(request, log_id):
         if attendance.status != 'ongoing':
             return JsonResponse({'message': 'You can only submit a timeout for an ongoing attendance log.'}, status=403)
 
-        # Check if the current time is within allowed hours (8 AM to 5 PM)
-        now = localtime()
-        if not (8 <= now.hour < 17) and attendance.type == 'f2f':
-            return JsonResponse({'message': 'Timeout is only allowed between 8 AM and 5 PM for f2f attendance.'}, status=403)
+        # Check if the current time is within allowed hours (8 AM to 7 PM)
+        now_dt = localtime()
+        if not (8 <= now_dt.hour < 19):
+            return JsonResponse({'message': 'Async timeout is only allowed between 8 AM and 7 PM.'}, status=403)
 
         # Update tasks with remarks and images
         tasks_data = request.POST  # Form data for remarks
@@ -415,7 +378,7 @@ def submit_async_out(request, log_id):
 
         # Update the attendance status and time_out
         attendance.status = 'sent'
-        attendance.time_out = now
+        attendance.time_out = now_dt
         attendance.save()
 
         return JsonResponse({'message': 'Timeout submitted successfully.'}, status=200)
@@ -524,7 +487,54 @@ def get_intern_attendance(request, log_id):
 
         return JsonResponse(response_data)
     except Attendance.DoesNotExist:
-        return JsonResponse({'message': 'Attendance log not found'}, status=404)
+        return JsonResponse({'message': 'Attendance log not found or unauthorized access'}, status=403)
+    except Exception as e:
+        return JsonResponse({'message': str(e)}, status=400)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([InternJWTAuthentication, SessionAuthentication])
+def attendance_log_details(request, log_id):
+    try:
+        # Extract the email from the JWT token
+        jwt_auth = JWTAuthentication()
+        validated_token = jwt_auth.get_validated_token(request.headers.get('Authorization').split()[1])
+        email = validated_token.get('email')
+
+        # Retrieve the intern using the email
+        intern = Intern.objects.get(email=email)
+
+        # Retrieve the specific attendance log and ensure it belongs to the logged-in intern
+        attendance = Attendance.objects.get(id=log_id, intern=intern)
+
+# Retrieve associated tasks
+        tasks = attendance.tasks.all()
+        tasks_data = []
+        for task in tasks:
+            images = task.images.all().values('id', 'file')
+            tasks_data.append({
+                'id': task.id,
+                'description': task.description,
+                'intern_remarks': task.intern_remarks,
+                'images': list(images),
+            })
+
+        # Format the response
+        response_data = {
+            'id': attendance.id,
+            'type': attendance.type,
+            'status': attendance.status,
+            'date': format(localtime(attendance.time_in), 'Y-m-d'),
+            'time_in': format(localtime(attendance.time_in), 'H:i:s'),
+            'time_out': format(localtime(attendance.time_out), 'H:i:s') if attendance.time_out else None,
+            'tasks': tasks_data,
+            'admin_remarks': attendance.admin_remarks,
+            'work_duration': attendance.work_duration.total_seconds() / 3600 if attendance.work_duration else 0,  # Convert to hours
+        }
+
+        return JsonResponse(response_data)
+    except Attendance.DoesNotExist:
+        return JsonResponse({'message': 'Attendance log not found or unauthorized access'}, status=403)
     except Exception as e:
         return JsonResponse({'message': str(e)}, status=400)
 
