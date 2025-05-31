@@ -20,7 +20,7 @@ const internDetails = ref({
 })
 
 // Sort and filter states for attendance logs
-const sortOption = ref('date-asc') // Default sort option
+const sortOption = ref('date-desc') // Default sort option
 const selectedStatuses = ref(['validated', 'flagged', 'sent', 'ongoing']) // Default status filter
 const selectedTypes = ref(['f2f', 'async']) // Default type filter
 
@@ -142,7 +142,7 @@ const canTimeInOut = computed(() => {
   const hasSentAttendance = timeInOutStore.attendanceLogs.some(
     (log) => log.date === today && log.status === 'sent'
   )
-  return currentHour >= 8 && currentHour < 17 && !hasSentAttendance
+  return currentHour >= 8 && currentHour < 19 && !hasSentAttendance
 })
 
 // Handle "Time In" button click

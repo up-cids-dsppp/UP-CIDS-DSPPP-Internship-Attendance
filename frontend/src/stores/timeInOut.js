@@ -4,7 +4,6 @@ import { useAuthStore } from './auth'
 
 export const useTimeInOutStore = defineStore('timeInOut', () => {
   const authStore = useAuthStore()
-  const currentUserEmail = authStore.userEmail // Get the logged-in user's email
 
   const isTimedIn = ref(false)
   const timedInLogId = ref(null) // Store the ID of the current timed-in task

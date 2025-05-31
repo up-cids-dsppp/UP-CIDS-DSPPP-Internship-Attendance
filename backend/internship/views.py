@@ -491,7 +491,7 @@ def get_intern_attendance(request, log_id):
     except Exception as e:
         return JsonResponse({'message': str(e)}, status=400)
 
-@api_view(['POST'])
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([InternJWTAuthentication, SessionAuthentication])
 def attendance_log_details(request, log_id):
