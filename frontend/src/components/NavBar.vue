@@ -50,10 +50,10 @@ const navbarColor = computed(() => {
     <!-- Logout Confirmation Modal -->
     <div v-if="showLogoutModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
       <div class="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full">
-        <h2 class="text-center text-lg font-bold mb-4 text-red-600">Confirm Logout</h2>
+        <h2 class="text-lg font-bold mb-4 text-red-600">Confirm Logout</h2>
         <p class="mb-6 text-black">Are you sure you want to log out?</p>
         <div class="flex justify-end space-x-2">
-          <button @click="cancelLogout" class="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300">Cancel</button>
+          <button @click="cancelLogout" class="px-4 py-2 rounded bg-gray-500 hover:bg-gray-700">Cancel</button>
           <button @click="confirmLogout" class="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600">Logout</button>
         </div>
       </div>
