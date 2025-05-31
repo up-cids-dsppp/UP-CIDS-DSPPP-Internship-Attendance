@@ -3,12 +3,31 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import NavBar from '../components/NavBar.vue'
+import { useAuthStore } from '../stores/auth' // <-- Import the auth store
 
 const router = useRouter()
+const authStore = useAuthStore() // <-- Use the auth store
 const interns = ref([])
 const adminEmail = ref('') // Store the admin's email
 const sortOption = ref('name-asc') // Default sort option
 const selectedStatuses = ref(['ongoing', 'dropped', 'completed', 'passed']) // Default filter
+
+// Modal state for logout confirmation
+const showLogoutModal = ref(false)
+
+// Logout handler
+const handleLogout = () => {
+  showLogoutModal.value = true
+}
+
+const confirmLogout = () => {
+  showLogoutModal.value = false
+  authStore.logout() // <-- Use the store's logout for proper cleanup and redirect
+}
+
+const cancelLogout = () => {
+  showLogoutModal.value = false
+}
 
 // Fetch interns and admin email when the component is mounted
 onMounted(async () => {
@@ -94,7 +113,19 @@ const exportAttendanceToCSV = async () => {
 <template>
   <div>
     <!-- Navbar Component -->
-    <NavBar userType="admin" :userEmail="adminEmail" />
+    <NavBar userType="admin" :userEmail="adminEmail" @logout="handleLogout" />
+
+    <!-- Logout Confirmation Modal -->
+    <div v-if="showLogoutModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+      <div class="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full">
+        <h2 class="text-lg font-bold mb-4">Confirm Logout</h2>
+        <p class="mb-6">Are you sure you want to log out?</p>
+        <div class="flex justify-end space-x-2">
+          <button @click="cancelLogout" class="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300">Cancel</button>
+          <button @click="confirmLogout" class="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600">Logout</button>
+        </div>
+      </div>
+    </div>
 
     <!-- Interns Section -->
     <div class="mt-8 px-6">

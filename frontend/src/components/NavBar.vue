@@ -1,23 +1,21 @@
 <script setup>
 import { computed } from 'vue'
-import { useAuthStore } from '../stores/auth'
 
 const props = defineProps({
   userType: {
     type: String,
-    required: true, // Accepts 'admin' or 'intern'
+    required: true,
   },
   userEmail: {
     type: String,
-    required: true, // The email of the logged-in user
+    required: true,
   },
 })
 
-const authStore = useAuthStore()
-
-// Logout function
+// Emit logout event to parent
+const emit = defineEmits(['logout'])
 const handleLogout = () => {
-  authStore.logout()
+  emit('logout')
 }
 
 // Compute the navbar color based on the user type

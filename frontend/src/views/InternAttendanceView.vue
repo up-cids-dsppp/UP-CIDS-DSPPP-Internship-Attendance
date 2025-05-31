@@ -133,7 +133,7 @@ const mediaBaseUrl = import.meta.env.VITE_MEDIA_BASE_URL
     <!-- Image Modal -->
     <div 
       v-if="showImageModal" 
-      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      class="fixed inset-0 bg-black/30 flex items-center justify-center z-50"
     >
       <div class="bg-white rounded-lg p-6 relative max-w-7xl w-full">
         <button 
