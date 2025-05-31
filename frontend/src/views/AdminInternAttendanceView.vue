@@ -413,8 +413,7 @@ const downloadImage = async () => {
         <img 
           :src="selectedImage" 
           alt="Selected Image" 
-          class="w-full h-auto rounded-lg mb-4"
-          style="max-width: 800px;"
+          class="w-full h-auto max-h-[80vh] rounded-lg object-contain mb-4"
         />
         <button
           v-if="selectedImage"
