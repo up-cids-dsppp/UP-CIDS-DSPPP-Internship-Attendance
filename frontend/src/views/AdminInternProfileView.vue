@@ -289,7 +289,7 @@ const goBack = () => {
             >
               <option disabled value="">-- Select --</option>
               <option value="dropped">Drop</option>
-              <option value="passed">Complete</option>
+              <option value="passed">Pass</option>
             </select>
             <p v-if="errors.type" class="text-red-500 text-sm mt-1">{{ errors.type }}</p>
           </div>
