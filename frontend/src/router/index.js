@@ -109,9 +109,6 @@ router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
   const timeInOutStore = useTimeInOutStore()
 
-  console.log(timeInOutStore.isTimedIn, timeInOutStore.timedOutForTheDay, timeInOutStore.tasksForTheDay, timeInOutStore.currentLogType)
-
-
   // Check if the user is logged in
   if (authStore.accessToken) {
     // Redirect to the appropriate home page based on user type
@@ -145,7 +142,6 @@ router.beforeEach(async (to, from, next) => {
 
       // Ensure the log ID matches the currently timed-in task
       if (String(to.params.log_id) !== String(timeInOutStore.timedInLogId)) {
-        console.log('Route log_id:', to.params.log_id, 'Store log_id:', timeInOutStore.timedInLogId)
         console.error('Log ID does not match the current timed-in task')
         return next('/unauthorized') // Redirect to unauthorized page
       }

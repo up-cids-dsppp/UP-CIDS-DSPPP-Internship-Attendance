@@ -41,29 +41,12 @@ onMounted(async () => {
     const response = await axios.get(`/admin/interns/attendance/${logId}/`);
     attendanceLog.value = response.data;
 
-    // Ensure tasks exist before iterating
-    if (attendanceLog.value.tasks && attendanceLog.value.tasks.length > 0) {
-      attendanceLog.value.tasks.forEach(task => {
-        console.log(`Task ID: ${task.id}, Description: ${task.description}`);
-        if (task.images && task.images.length > 0) {
-          task.images.forEach(image => {
-            console.log(`Image ID: ${image.id}, File URL: ${image.file}`);
-          });
-        } else {
-          console.log(`Task ID: ${task.id} has no images.`);
-        }
-      });
-    } else {
-      console.log('No tasks available for this attendance log.');
-    }
-
     // Calculate max duration
     if (attendanceLog.value.time_in && attendanceLog.value.time_out) {
       const currentDate = new Date().toISOString().split('T')[0]; // Get today's date
       const timeIn = new Date(`${currentDate}T${attendanceLog.value.time_in}`);
       const timeOut = new Date(`${currentDate}T${attendanceLog.value.time_out}`);
       maxDuration.value = (timeOut - timeIn) / (1000 * 60 * 60); // Convert to hours
-      console.log('Max Duration (hours):', maxDuration.value);
     }
   } catch (error) {
     console.error('Failed to fetch attendance log:', error);
@@ -161,6 +144,27 @@ const closeImageModal = () => {
   selectedImage.value = null
   showImageModal.value = false
 }
+
+// Function to download the image
+const downloadImage = async () => {
+  if (!selectedImage.value) return
+  try {
+    const response = await fetch(selectedImage.value)
+    const blob = await response.blob()
+    // Try to get a filename from the URL
+    const urlParts = selectedImage.value.split('/')
+    const filename = urlParts[urlParts.length - 1] || 'image.jpg'
+    const link = document.createElement('a')
+    link.href = window.URL.createObjectURL(blob)
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(link.href)
+  } catch (e) {
+    alert('Failed to download image.')
+  }
+};
 </script>
 
 <template>
@@ -399,7 +403,7 @@ const closeImageModal = () => {
       v-if="showImageModal" 
       class="fixed inset-0 bg-black/30 flex items-center justify-center z-50"
     >
-      <div class="bg-white rounded-lg p-4 relative max-w-7xl w-full">
+      <div class="bg-white rounded-lg p-4 relative max-w-7xl w-full flex flex-col items-center">
         <button 
           @click="closeImageModal" 
           class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-5xl"
@@ -409,8 +413,16 @@ const closeImageModal = () => {
         <img 
           :src="selectedImage" 
           alt="Selected Image" 
-          class="w-full h-auto rounded-lg"
+          class="w-full h-auto rounded-lg mb-4"
+          style="max-width: 800px;"
         />
+        <button
+          v-if="selectedImage"
+          @click="downloadImage"
+          class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+        >
+          Download Image
+        </button>
       </div>
     </div>
   </div>

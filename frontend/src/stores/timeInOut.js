@@ -28,7 +28,6 @@ export const useTimeInOutStore = defineStore('timeInOut', () => {
 
   const setInternStatus = (status) => {
     internStatus.value = status
-    console.log('Intern status set to:', status)
   }
 
   function setTimedOutForTheDay(status) {
