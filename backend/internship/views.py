@@ -194,9 +194,9 @@ def intern_details(request, intern_id):
             return JsonResponse({'message': 'Intern details updated successfully.'})
 
         elif request.method == 'DELETE':
-            # Allow deletion only if the intern's status is "dropped" or "completed"
-            if intern.status not in ['dropped', 'completed']:
-                return JsonResponse({'message': 'Intern can only be deleted if their status is "dropped" or "completed".'}, status=400)
+            # Allow deletion only if the intern's status is "dropped" or "passed"
+            if intern.status not in ['dropped', 'passed']:
+                return JsonResponse({'message': 'Intern can only be deleted if their status is "dropped" or "passed".'}, status=400)
 
             # Delete the intern
             intern.delete()
@@ -220,8 +220,8 @@ def submit_f2f_in(request):
         # Retrieve the intern using the email
         intern = Intern.objects.get(email=email)
 
-        # Restrict access for completed or dropped interns
-        if intern.status in ['completed', 'dropped']:
+        # Restrict access for passed or dropped interns
+        if intern.status in ['passed', 'dropped']:
             return JsonResponse({'message': 'You are not allowed to log attendance with your current status.'}, status=403)
 
         # Check if the current time is within allowed hours (8 AM to 5 PM)
@@ -286,8 +286,8 @@ def submit_async_in(request):
         # Retrieve the intern using the email
         intern = Intern.objects.get(email=email)
 
-        # Restrict access for completed or dropped interns
-        if intern.status in ['completed', 'dropped']:
+        # Restrict access for passed or dropped interns
+        if intern.status in ['passed', 'dropped']:
             return JsonResponse({'message': 'You are not allowed to log attendance with your current status.'}, status=403)
 
         # Check if the current time is within allowed hours (8 AM to 7 PM)
@@ -334,8 +334,8 @@ def submit_async_out(request, log_id):
         # Retrieve the intern using the email
         intern = Intern.objects.get(email=email)
 
-        # Restrict access for completed or dropped interns
-        if intern.status in ['completed', 'dropped']:
+        # Restrict access for passed or dropped interns
+        if intern.status in ['passed', 'dropped']:
             return JsonResponse({'message': 'You are not allowed to submit a timeout with your current status.'}, status=403)
 
         # Check if the current time is within allowed hours (8 AM to 7 PM)

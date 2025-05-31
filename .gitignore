@@ -13,6 +13,7 @@ db.sqlite3
 *.log
 media/
 staticfiles/
+migrations/
 
 # IDEs and editors
 .vscode/
@@ -42,6 +43,7 @@ coverage
 
 /cypress/videos/
 /cypress/screenshots/
+
 
 # Editor directories and files
 .vscode/*

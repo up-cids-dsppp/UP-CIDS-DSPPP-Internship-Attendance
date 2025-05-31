@@ -93,9 +93,9 @@ const viewAttendanceLog = (logId) => {
 const submitEvaluation = async () => {
   errors.value = {}
 
-  // Check if the evaluation type is "completed" and the intern's status is not "passed"
-  if (evaluationType.value === 'completed' && internDetails.value.status !== 'passed') {
-    alert('A "completed" evaluation can only be submitted if the intern has a status of "passed".')
+  // Check if the evaluation type is "passed" and the intern's status is not "completed"
+  if (evaluationType.value === 'passed' && internDetails.value.status !== 'completed') {
+    alert('A "passed" evaluation can only be submitted if the intern has a status of "completed".')
     return
   }
 
@@ -181,7 +181,7 @@ const goBack = () => {
       <!-- Conditional Buttons -->
       <div class="mb-6">
         <button 
-          v-if="internDetails.status === 'ongoing' || internDetails.status === 'passed'" 
+          v-if="internDetails.status === 'ongoing' || internDetails.status === 'completed'" 
           @click="showEvaluationModal = true" 
           class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
         >
@@ -199,7 +199,7 @@ const goBack = () => {
       <!-- Delete Intern Button -->
       <div class="mb-6">
         <button 
-          v-if="internDetails.status === 'dropped' || internDetails.status === 'completed'" 
+          v-if="internDetails.status === 'dropped' || internDetails.status === 'passed'" 
           @click="showDeleteModal = true" 
           class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
         >
@@ -257,10 +257,10 @@ const goBack = () => {
         <strong>Status: </strong> 
         <span 
           :class="{
-            'text-green-500': internDetails.status === 'completed',
+            'text-green-500': internDetails.status === 'passed',
             'text-black': internDetails.status === 'ongoing',
             'text-red-500': internDetails.status === 'dropped',
-            'text-orange-500': internDetails.status === 'passed',
+            'text-orange-500': internDetails.status === 'completed',
           }"
         >
           {{ internDetails.status }}
@@ -289,7 +289,7 @@ const goBack = () => {
             >
               <option disabled value="">-- Select --</option>
               <option value="dropped">Drop</option>
-              <option value="completed">Complete</option>
+              <option value="passed">Complete</option>
             </select>
             <p v-if="errors.type" class="text-red-500 text-sm mt-1">{{ errors.type }}</p>
           </div>

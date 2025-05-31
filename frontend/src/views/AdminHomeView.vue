@@ -8,7 +8,7 @@ const router = useRouter()
 const interns = ref([])
 const adminEmail = ref('') // Store the admin's email
 const sortOption = ref('name-asc') // Default sort option
-const selectedStatuses = ref(['ongoing', 'dropped', 'passed', 'completed']) // Default filter
+const selectedStatuses = ref(['ongoing', 'dropped', 'completed', 'passed']) // Default filter
 
 // Fetch interns and admin email when the component is mounted
 onMounted(async () => {
@@ -31,9 +31,9 @@ const goToAddIntern = () => {
 
 // Get row color based on intern status
 const getRowClass = (status) => {
-  if (status === 'completed') return 'bg-green-100'
+  if (status === 'passed') return 'bg-green-100'
   if (status === 'dropped') return 'bg-red-100'
-  if (status === 'passed') return 'bg-orange-100'
+  if (status === 'completed') return 'bg-orange-100'
   return '' // Default for ongoing (clear)
 }
 
@@ -147,7 +147,7 @@ const exportAttendanceToCSV = async () => {
         <div>
           <label class="block text-sm font-medium text-gray-700">Filter By Status:</label>
           <div class="mt-1 space-y-1">
-            <div v-for="status in ['ongoing', 'dropped', 'passed', 'completed']" :key="status">
+            <div v-for="status in ['ongoing', 'dropped', 'completed', 'passed']" :key="status">
               <label class="inline-flex items-center">
                 <input 
                   type="checkbox" 

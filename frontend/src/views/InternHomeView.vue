@@ -190,10 +190,10 @@ const viewAttendanceLog = (logId) => {
         <strong>Status: </strong> 
         <span 
           :class="{
-            'text-green-500': internDetails.status === 'completed',
+            'text-green-500': internDetails.status === 'passed',
             'text-black': internDetails.status === 'ongoing',
             'text-red-500': internDetails.status === 'dropped',
-            'text-orange-500': internDetails.status === 'passed',
+            'text-orange-500': internDetails.status === 'completed',
           }"
         >
           {{ internDetails.status }}
@@ -202,10 +202,10 @@ const viewAttendanceLog = (logId) => {
 
       <!-- Status Section -->
       <div
-        v-if="internDetails.status === 'completed'"
+        v-if="internDetails.status === 'passed'"
         class="text-white p-4 mt-4 rounded-lg max-w-md bg-green-500"
       >
-        <p class="text-lg font-semibold">Status: Completed</p>
+        <p class="text-lg font-semibold">Status: Passed</p>
         <p class="mt-2"><strong>Admin Remarks:</strong><br>{{ internDetails.admin_remarks || 'No remarks provided.' }}</p>
       </div>
 
@@ -236,7 +236,7 @@ const viewAttendanceLog = (logId) => {
           Tasks to accomplish: {{ timeInOutStore.tasksForTheDay }}
         </p>
         <div class="flex justify-end mt-4">
-          <template v-if="internDetails.status !== 'completed' && internDetails.status !== 'dropped'">
+          <template v-if="internDetails.status !== 'passed' && internDetails.status !== 'dropped'">
             <template v-if="canTimeInOut">
               <button
                 v-if="!timeInOutStore.isTimedIn"

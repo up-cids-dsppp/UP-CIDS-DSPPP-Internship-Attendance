@@ -5,10 +5,10 @@ from datetime import timedelta
 
 class Intern(models.Model):
     STATUS_CHOICES = [
-        ('completed', 'Completed'),
+        ('passed', 'Passed'),
         ('ongoing', 'Ongoing'),
         ('dropped', 'Dropped'),
-        ('passed', 'Passed'),
+        ('completed', 'Completed'),
     ]
 
     email = models.EmailField(unique=True, max_length=255)
@@ -42,10 +42,10 @@ class Intern(models.Model):
         self.time_rendered = total_work_duration
 
         # Check if time_rendered >= time_to_render and update status
-        # Only update status if it is not explicitly set to 'completed' or 'dropped'
-        if self.status not in ['completed', 'dropped']:
+        # Only update status if it is not explicitly set to 'passed' or 'dropped'
+        if self.status not in ['passed', 'dropped']:
             if self.time_rendered >= self.time_to_render:
-                self.status = 'passed'
+                self.status = 'completed'
             else:
                 self.status = 'ongoing'
 
