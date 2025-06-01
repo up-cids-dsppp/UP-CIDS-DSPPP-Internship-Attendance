@@ -219,16 +219,18 @@ const viewAttendanceLog = (logId) => {
         <p class="text-lg"><br>Please email admin for re-evaluation.</p>
       </div>
 
-      <div
+     <div
         :class="[
           'text-white p-4 mt-4 rounded-lg max-w-md',
-          hasTimedOutAttendanceToday
+          internDetails.status === 'passed' || internDetails.status === 'dropped'
             ? 'bg-gray-500'
-            : canTimeInOut
-            ? timeInOutStore.isTimedIn
-              ? 'bg-red-500'
-              : 'bg-green-500'
-            : 'bg-gray-500'
+            : hasTimedOutAttendanceToday
+              ? 'bg-gray-500'
+              : canTimeInOut
+                ? timeInOutStore.isTimedIn
+                  ? 'bg-red-500'
+                  : 'bg-green-500'
+                : 'bg-gray-500'
         ]"
       >
         <p class="text-lg font-semibold">Today's Date: {{ currentDate }}</p>
