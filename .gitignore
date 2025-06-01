@@ -13,7 +13,6 @@ db.sqlite3
 *.log
 media/
 staticfiles/
-migrations/
 templates/
 
 # IDEs and editors
