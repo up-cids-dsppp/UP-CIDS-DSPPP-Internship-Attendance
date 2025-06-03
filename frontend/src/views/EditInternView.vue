@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
-import { useAuthStore } from '../stores/auth' // Import the auth store
+import { useAuthStore } from '../stores/auth'
 import NavBar from '../components/NavBar.vue'
 
 // Helper function to get today's date in YYYY-MM-DD format
@@ -34,6 +34,7 @@ const showConfirmationModal = ref(false) // Control confirmation modal visibilit
 
 // Add a loading state
 const isGeneratingPassword = ref(false)
+const isSubmitting = ref(false) // Add this line
 
 // Fetch the intern's details when the component is mounted
 onMounted(async () => {
@@ -136,6 +137,7 @@ const handleSubmit = async () => {
 
 // Confirm submission
 const confirmSubmit = async () => {
+  isSubmitting.value = true // Show loading modal
   try {
     await axios.put(`/admin/interns/${internId}/`, {
       full_name: fullName.value,
@@ -151,6 +153,8 @@ const confirmSubmit = async () => {
     console.error('Failed to update intern details:', error)
     alert('Failed to update intern details. Please try again.')
     showConfirmationModal.value = false // Close the modal
+  } finally {
+    isSubmitting.value = false // Hide loading modal
   }
 }
 
@@ -279,6 +283,21 @@ const goBack = () => {
             Confirm
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div
+      v-if="isSubmitting"
+      class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+      style="z-index:9999"
+    >
+      <div class="bg-white rounded-lg p-8 flex flex-col items-center">
+        <svg class="animate-spin h-8 w-8 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+        </svg>
+        <span class="text-lg font-semibold text-gray-700">Saving changes, please wait...</span>
       </div>
     </div>
   </div>

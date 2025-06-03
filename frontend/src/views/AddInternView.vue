@@ -72,7 +72,10 @@ const handleSubmit = async () => {
   showConfirmationModal.value = true;
 };
 
+const isSubmitting = ref(false) // Add this line
+
 const confirmSubmit = async () => {
+  isSubmitting.value = true // Show loading modal
   try {
     await axios.post('/admin/interns', {
       full_name: fullName.value,
@@ -81,13 +84,15 @@ const confirmSubmit = async () => {
       start_date: startDate.value,
       time_to_render: timeToRender.value,
     });
-    showConfirmationModal.value = false; // Close the modal
-    alert('Intern added successfully!'); // Success alert
-    router.push('/admin/home'); // Redirect to admin home page
+    showConfirmationModal.value = false;
+    alert('Intern added successfully!');
+    router.push('/admin/home');
   } catch (error) {
     console.error('Failed to add intern:', error);
-    showConfirmationModal.value = false; // Close the modal
-    alert('Failed to add intern. Please try again.'); // Error alert
+    showConfirmationModal.value = false;
+    alert('Failed to add intern. Please try again.');
+  } finally {
+    isSubmitting.value = false // Hide loading modal
   }
 };
 
@@ -277,6 +282,21 @@ const showConfirmationModal = ref(false); // Control confirmation modal visibili
           Confirm
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- Loading Modal -->
+  <div
+    v-if="isSubmitting"
+    class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+    style="z-index:9999"
+  >
+    <div class="bg-white rounded-lg p-8 flex flex-col items-center">
+      <svg class="animate-spin h-8 w-8 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+      </svg>
+      <span class="text-lg font-semibold text-gray-700">Adding intern, please wait...</span>
     </div>
   </div>
 </template>
