@@ -30,5 +30,5 @@ urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # Catch-all for frontend routes (must be last)
 urlpatterns += [
-    re_path(r'^.*$', FrontendAppView.as_view(), name='frontend'),
+    re_path(r'^(?!internship/).*$', FrontendAppView.as_view(), name='frontend'),
 ]

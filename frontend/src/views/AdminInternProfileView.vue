@@ -55,7 +55,7 @@ onMounted(async () => {
       status: profileResponse.data.status,
     }
 
-    attendanceLogs.value = profileResponse.data.attendance_logs
+    attendanceLogs.value = profileResponse.data.attendance_logs || []
     previousStatus.value = profileResponse.data.previous_status || 'ongoing' // Default to "ongoing"
   } catch (error) {
     console.error('Failed to fetch data:', error)
@@ -251,8 +251,12 @@ const goBack = () => {
       <p class="mt-2"><strong>Full Name:</strong> {{ internDetails.full_name }}</p>
       <p class="mt-2"><strong>Email:</strong> {{ internDetails.email }}</p>
       <p class="mt-2"><strong>Start Date:</strong> {{ internDetails.start_date }}</p>
-      <p class="mt-2"><strong>Time to be Rendered:</strong> {{ internDetails.time_to_render.toFixed(2) }} hours</p>
-      <p class="mt-2"><strong>Time Rendered:</strong> {{ internDetails.time_rendered.toFixed(2) }} hours</p>
+      <p class="mt-2"><strong>Time to be Rendered:</strong>
+        {{ typeof internDetails.time_to_render === 'number' ? internDetails.time_to_render.toFixed(2) : 'N/A' }} hours
+      </p>
+      <p class="mt-2"><strong>Time Rendered:</strong>
+        {{ typeof internDetails.time_rendered === 'number' ? internDetails.time_rendered.toFixed(2) : 'N/A' }} hours
+      </p>
       <p class="mt-2">
         <strong>Status: </strong> 
         <span 

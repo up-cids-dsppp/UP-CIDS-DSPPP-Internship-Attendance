@@ -121,23 +121,22 @@ def manage_interns(request):
 
 @api_view(['GET', 'DELETE', 'PUT'])
 @permission_classes([IsAuthenticated])
-@user_passes_test(lambda u: u.is_superuser)  # Ensure only admins can access
+@user_passes_test(lambda u: u.is_superuser)
 def intern_details(request, intern_id):
     try:
         intern = Intern.objects.get(id=intern_id)
 
+
         if request.method == 'GET':
-            # Retrieve attendance logs linked to the intern
             attendance_logs = Attendance.objects.filter(intern=intern).values(
                 'id',
                 'type',
                 'time_in',
                 'time_out',
                 'status',
-                'work_duration',  # Include work_duration
+                'work_duration',
             )
-
-            # Format attendance logs for the response
+            print(f"Attendance logs for intern {intern_id}: {attendance_logs}")  # Debugging line
             formatted_logs = []
             for log in attendance_logs:
                 formatted_logs.append({
@@ -147,19 +146,18 @@ def intern_details(request, intern_id):
                     'time_in': format(localtime(log['time_in']), 'H:i:s'),
                     'time_out': format(localtime(log['time_out']), 'H:i:s') if log['time_out'] else None,
                     'status': log['status'],
-                    'work_duration': log['work_duration'].total_seconds() / 3600 if log['work_duration'] else 0,  # Convert to hours
+                    'work_duration': log['work_duration'].total_seconds() / 3600 if log['work_duration'] else 0,
                 })
-
-            # Return all details except the password
             intern_data = {
                 'id': intern.id,
                 'full_name': intern.full_name,
                 'email': intern.email,
                 'start_date': intern.start_date,
-                'time_to_render': intern.time_to_render.total_seconds() / 3600,  # Convert timedelta to hours
-                'time_rendered': intern.time_rendered.total_seconds() / 3600 if intern.time_rendered else 0,  # Convert timedelta to hours
+                'time_to_render': intern.time_to_render.total_seconds() / 3600 if intern.time_to_render else 0,
+                'time_rendered': intern.time_rendered.total_seconds() / 3600 if intern.time_rendered else 0,
                 'status': intern.status,
                 'attendance_logs': formatted_logs,
+                'previous_status': 'ongoing',  # Add this if needed by frontend
             }
             return JsonResponse(intern_data, safe=False)
 
