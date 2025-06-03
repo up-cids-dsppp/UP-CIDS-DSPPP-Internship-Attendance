@@ -142,7 +142,7 @@ const canTimeInOut = computed(() => {
   const currentHour = now.getHours()
   const today = new Date().toISOString().split('T')[0]
   const hasSentAttendance = timeInOutStore.attendanceLogs.some(
-    (log) => log.date === today && log.status === 'sent'
+    (log) => log.date === today && log.status !== 'ongoing'
   )
   return currentHour >= 8 && currentHour < 19 && !hasSentAttendance
 })
