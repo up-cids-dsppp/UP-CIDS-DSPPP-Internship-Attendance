@@ -164,32 +164,36 @@ def intern_details(request, intern_id):
 
         elif request.method == 'PUT':
             data = request.data
-            intern.full_name = data.get('full_name', intern.full_name)
-            intern.email = data.get('email', intern.email)
-            password_plain = None
-            # Compose the email body
+            # Check if a new password is provided
+            new_password = data.get('password')
+            password_display = new_password if new_password else '[unchanged]'
+
+            # Prepare the email body with the intended update
             email_body = (
                 "Please check if your details are correct. Take note of your password. "
                 "Refer to the Intern Manual (https://drive.google.com/file/d/16X8MW9UYsQioxhEmNL8TDhWAS3Rdhe0l/view?usp=share_link). "
                 "If you have any concerns, please email your internship supervisor.\n\n"
-                f"Full Name: {intern.full_name}\n"
-                f"Email: {intern.email}\n"
-                f"Password: {password_plain if password_plain else '[unchanged]'}\n"
-                f"Start Date: {intern.start_date}\n"
-                f"Time to Render: {int(intern.time_to_render.total_seconds() // 3600)} hours\n"
+                f"Full Name: {data.get('full_name', intern.full_name)}\n"
+                f"Email: {data.get('email', intern.email)}\n"
+                f"Password: {password_display}\n"
+                f"Start Date: {data.get('start_date', intern.start_date)}\n"
+                f"Time to Render: {data.get('time_to_render', int(intern.time_to_render.total_seconds() // 3600))} hours\n"
             )
             send_mail(
                 subject='Your Internship Account Details Updated',
                 message=email_body,
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[intern.email],
+                recipient_list=[data.get('email', intern.email)],
                 fail_silently=False,
             )
-            if 'password' in data and data['password']:  # Only update if password is provided
-                intern.password = make_password(data['password'])  # Hash the new password
-                password_plain = data['password']
+
+            # Now update the intern object
+            intern.full_name = data.get('full_name', intern.full_name)
+            intern.email = data.get('email', intern.email)
+            if new_password:
+                intern.password = make_password(new_password)
             intern.start_date = data.get('start_date', intern.start_date)
-            intern.time_to_render = timedelta(hours=int(data['time_to_render']))
+            intern.time_to_render = timedelta(hours=int(data.get('time_to_render', int(intern.time_to_render.total_seconds() // 3600))))
             intern.save()
             return JsonResponse({'message': 'Intern details updated successfully.'})
 
