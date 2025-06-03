@@ -94,7 +94,8 @@ def manage_interns(request):
             # Compose the email body
             email_body = (
                 "Please check if your details are correct. Take note of your password. "
-                "If you have any concerns, Please email your internship supervisor.\n\n"
+                "Refer to the Intern Manual (https://drive.google.com/file/d/16X8MW9UYsQioxhEmNL8TDhWAS3Rdhe0l/view?usp=share_link)"
+                "If you have any concerns, please email your internship supervisor.\n\n"
                 f"Full Name: {data['full_name']}\n"
                 f"Email: {data['email']}\n"
                 f"Password: {data['password']}\n"
@@ -169,7 +170,8 @@ def intern_details(request, intern_id):
             # Compose the email body
             email_body = (
                 "Please check if your details are correct. Take note of your password. "
-                "If you have any concerns, Please email your internship supervisor.\n\n"
+                "Refer to the Intern Manual (https://drive.google.com/file/d/16X8MW9UYsQioxhEmNL8TDhWAS3Rdhe0l/view?usp=share_link)"
+                "If you have any concerns, please email your internship supervisor.\n\n"
                 f"Full Name: {intern.full_name}\n"
                 f"Email: {intern.email}\n"
                 f"Password: {password_plain if password_plain else '[unchanged]'}\n"
