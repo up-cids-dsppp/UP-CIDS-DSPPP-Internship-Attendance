@@ -21,7 +21,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path('super/', admin.site.urls),
+    path('django_admin/', admin.site.urls),
     path('internship/', include('internship.urls')),
 ]
 
