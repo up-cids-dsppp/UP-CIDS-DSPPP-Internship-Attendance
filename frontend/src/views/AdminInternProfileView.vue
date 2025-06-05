@@ -25,7 +25,7 @@ const internDetails = ref({
 const attendanceLogs = ref([])
 
 // Sort and filter states for attendance logs
-const sortOption = ref('date-asc') // Default sort option
+const sortOption = ref('date-desc') // Default sort option
 const selectedStatuses = ref(['validated', 'flagged', 'sent', 'ongoing']) // Default status filter
 const selectedTypes = ref(['f2f', 'async']) // Default type filter
 
