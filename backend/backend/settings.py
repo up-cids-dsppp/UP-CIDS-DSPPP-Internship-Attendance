@@ -143,11 +143,10 @@ REST_FRAMEWORK = {
         'internship.auth.InternJWTAuthentication',  # Add this line
     ),
 }
+CORS_ALLOW_ALL_ORIGINS = False
 
 # Read CORS_ALLOWED_ORIGINS from .env (comma-separated)
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
-
-CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOW_CREDENTIALS = True
 
