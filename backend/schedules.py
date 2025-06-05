@@ -17,6 +17,7 @@ crontab, _ = CrontabSchedule.objects.get_or_create(
     day_of_week='*',
     day_of_month='*',
     month_of_year='*',
+    timezone='Asia/Manila',
 )
 
 PeriodicTask.objects.create(
@@ -33,6 +34,7 @@ crontab2, _ = CrontabSchedule.objects.get_or_create(
     day_of_week='*',
     day_of_month='*',
     month_of_year='*',
+    timezone='Asia/Manila',
 )
 
 PeriodicTask.objects.create(

@@ -104,10 +104,26 @@ function isWithinAllowedTime() {
   return hour >= 8 && hour < 19
 }
 
+function isTokenExpired(token) {
+  if (!token) return true
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return payload.exp * 1000 < Date.now()
+  } catch {
+    return true
+  }
+}
+
 // Add a global navigation guard
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
   const timeInOutStore = useTimeInOutStore()
+
+  // If token is expired, logout and go to landing
+  if (authStore.accessToken && isTokenExpired(authStore.accessToken)) {
+    authStore.logout()
+    return next({ path: '/' })
+  }
 
   // Check if the user is logged in
   if (authStore.accessToken) {

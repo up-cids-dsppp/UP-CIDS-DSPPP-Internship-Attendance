@@ -62,9 +62,9 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('userType')
     localStorage.removeItem('userEmail')
     delete axios.defaults.headers.common['Authorization']
-    clearTimeout(idleTimer) // Clear the idle timer
-    clearTimeout(tokenExpirationTimer) // Clear the token expiration timer
-    router.push('/') // Redirect to landing page
+    clearTimeout(idleTimer)
+    clearTimeout(tokenExpirationTimer)
+    window.location.href = '/' // Force redirect to landing page
   }
 
   const refreshAccessToken = async () => {
@@ -126,7 +126,7 @@ export const useAuthStore = defineStore('auth', () => {
 })
 
 axios.interceptors.response.use(
-  (response) => response, // Pass through successful responses
+  (response) => response,
   async (error) => {
     const authStore = useAuthStore()
 
@@ -141,10 +141,12 @@ axios.interceptors.response.use(
       } catch (refreshError) {
         // If refreshing fails, log the user out and redirect to the landing page
         authStore.logout()
+        // Ensure redirect to landing page
+        window.location.href = '/'
         return Promise.reject(refreshError)
       }
     }
 
-    return Promise.reject(error) // Pass through other errors
+    return Promise.reject(error)
   }
 )

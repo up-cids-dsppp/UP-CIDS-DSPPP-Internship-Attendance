@@ -164,6 +164,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Directory to store uploaded file
 CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Redis as the message broker
 CELERY_ACCEPT_CONTENT = ['json']  # Accept JSON-encoded tasks
 CELERY_TASK_SERIALIZER = 'json'  # Serialize tasks in JSON format
+CELERY_TIMEZONE = 'Asia/Manila'
+CELERY_ENABLE_UTC = False
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.getenv('EMAIL_HOST')
