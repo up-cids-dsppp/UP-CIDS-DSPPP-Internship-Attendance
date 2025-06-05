@@ -169,6 +169,35 @@ const handleTimeOut = () => {
 const viewAttendanceLog = (logId) => {
   router.push(`/intern/attendance/${logId}`) // Redirect to the attendance log details page
 }
+
+// Computed properties for validated hours
+const attendanceLogs = ref([]) // This should be populated with the actual attendance logs data
+
+const validatedF2FHours = computed(() =>
+  timeInOutStore.attendanceLogs
+    .filter(log => log.status === 'validated' && log.type === 'f2f')
+    .reduce((sum, log) => sum + (log.work_duration || 0), 0)
+)
+
+const validatedAsyncHours = computed(() =>
+  timeInOutStore.attendanceLogs
+    .filter(log => log.status === 'validated' && log.type === 'async')
+    .reduce((sum, log) => sum + (log.work_duration || 0), 0)
+)
+
+const totalValidatedHours = computed(() => validatedF2FHours.value + validatedAsyncHours.value)
+
+const f2fPercentage = computed(() =>
+  totalValidatedHours.value > 0
+    ? ((validatedF2FHours.value / totalValidatedHours.value) * 100).toFixed(2)
+    : '0.00'
+)
+
+const asyncPercentage = computed(() =>
+  totalValidatedHours.value > 0
+    ? ((validatedAsyncHours.value / totalValidatedHours.value) * 100).toFixed(2)
+    : '0.00'
+)
 </script>
 
 <template>
@@ -186,7 +215,17 @@ const viewAttendanceLog = (logId) => {
       <p class="mt-2"><strong>Email:</strong> {{ internDetails.email }}</p>
       <p class="mt-2"><strong>Start Date:</strong> {{ internDetails.start_date }}</p>
       <p class="mt-2"><strong>Time to be Rendered:</strong> {{ internDetails.time_to_render.toFixed(2) }} hours</p>
-      <p class="mt-2"><strong>Time Rendered:</strong> {{ internDetails.time_rendered.toFixed(2) }} hours</p>
+      <p class="mt-2"><strong>Time Rendered:</strong>
+        {{ typeof internDetails.time_rendered === 'number' ? internDetails.time_rendered.toFixed(2) : 'N/A' }} hours
+        <br>
+        <span style="margin-left: 2em;">
+          F2F: {{ f2fPercentage }}%
+        </span>
+        <br>
+        <span style="margin-left: 2em;">
+          Async: {{ asyncPercentage }}%
+        </span>
+      </p>
       <p class="mt-2">
         <strong>Status: </strong> 
         <span 

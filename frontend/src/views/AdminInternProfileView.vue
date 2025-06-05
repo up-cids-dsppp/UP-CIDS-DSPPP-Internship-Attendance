@@ -165,6 +165,33 @@ const deleteIntern = async () => {
 const goBack = () => {
   router.push('/admin/home') // Redirect to the interns list page
 }
+
+// Computed properties for attendance log statistics
+const validatedF2FHours = computed(() =>
+  attendanceLogs.value
+    .filter(log => log.status === 'validated' && log.type === 'f2f')
+    .reduce((sum, log) => sum + (log.work_duration || 0), 0)
+)
+
+const validatedAsyncHours = computed(() =>
+  attendanceLogs.value
+    .filter(log => log.status === 'validated' && log.type === 'async')
+    .reduce((sum, log) => sum + (log.work_duration || 0), 0)
+)
+
+const totalValidatedHours = computed(() => validatedF2FHours.value + validatedAsyncHours.value)
+
+const f2fPercentage = computed(() =>
+  totalValidatedHours.value > 0
+    ? ((validatedF2FHours.value / totalValidatedHours.value) * 100).toFixed(2)
+    : '0.00'
+)
+
+const asyncPercentage = computed(() =>
+  totalValidatedHours.value > 0
+    ? ((validatedAsyncHours.value / totalValidatedHours.value) * 100).toFixed(2)
+    : '0.00'
+)
 </script>
 
 <template>
@@ -256,6 +283,14 @@ const goBack = () => {
       </p>
       <p class="mt-2"><strong>Time Rendered:</strong>
         {{ typeof internDetails.time_rendered === 'number' ? internDetails.time_rendered.toFixed(2) : 'N/A' }} hours
+        <br>
+        <span style="margin-left: 2em;">
+          F2F: {{ f2fPercentage }}%
+        </span>
+        <br>
+        <span style="margin-left: 2em;">
+          Async: {{ asyncPercentage }}%
+        </span>
       </p>
       <p class="mt-2">
         <strong>Status: </strong> 
