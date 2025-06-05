@@ -14,6 +14,7 @@ export const useTimeInOutStore = defineStore('timeInOut', () => {
   const attendanceLogs = ref([])
   const mostRecentAttendance = ref(null) // Tracks the most recent attendance log
   const timedInLog = ref(null) // Tracks the timed-in log
+  const internStartDate = ref(null) // Add this line
 
   // Actions to update the state
   function setTimedIn(status, logId, logType) {
@@ -49,6 +50,9 @@ export const useTimeInOutStore = defineStore('timeInOut', () => {
     const hasSentAttendance = attendanceLogs.value.some(
       (log) => log.date === today && log.status === 'sent'
     )
+    // Prevent time in/out if start date is in the future
+    if (!internStartDate.value) return false
+    if (today < internStartDate.value) return false
     return currentHour >= 8 && currentHour < 19 && !hasSentAttendance
   })
 
@@ -62,6 +66,7 @@ export const useTimeInOutStore = defineStore('timeInOut', () => {
     attendanceLogs,
     mostRecentAttendance,
     timedInLog,
+    internStartDate, // Add this to the return object
     canTimeInOut,
     setTimedIn,
     setTasksForTheDay,

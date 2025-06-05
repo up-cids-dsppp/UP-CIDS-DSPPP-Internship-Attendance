@@ -15,7 +15,7 @@ from .auth import InternJWTAuthentication
 from datetime import timedelta
 from django.utils.dateformat import format
 from django.utils.timezone import now
-from django.utils.timezone import localtime
+from django.utils.timezone import localtime, localdate
 import base64
 from django.core.files.base import ContentFile
 import csv
@@ -224,6 +224,9 @@ def submit_f2f_in(request):
         # Retrieve the intern using the email
         intern = Intern.objects.get(email=email)
 
+        if localdate() < intern.start_date:
+            return JsonResponse({'message': 'You cannot time in/out before your official start date.'}, status=403)
+
         # Restrict access for passed or dropped interns
         if intern.status in ['passed', 'dropped']:
             return JsonResponse({'message': 'You are not allowed to log attendance with your current status.'}, status=403)
@@ -290,6 +293,10 @@ def submit_async_in(request):
         # Retrieve the intern using the email
         intern = Intern.objects.get(email=email)
 
+        # Restrict access for interns who have not started yet
+        if localdate() < intern.start_date:
+            return JsonResponse({'message': 'You cannot time in/out before your official start date.'}, status=403)
+
         # Restrict access for passed or dropped interns
         if intern.status in ['passed', 'dropped']:
             return JsonResponse({'message': 'You are not allowed to log attendance with your current status.'}, status=403)
@@ -337,6 +344,10 @@ def submit_async_out(request, log_id):
 
         # Retrieve the intern using the email
         intern = Intern.objects.get(email=email)
+
+        # Restrict access for interns who have not started yet
+        if localdate() < intern.start_date:
+            return JsonResponse({'message': 'You cannot time in/out before your official start date.'}, status=403)
 
         # Restrict access for passed or dropped interns
         if intern.status in ['passed', 'dropped']:
@@ -406,6 +417,14 @@ def submit_f2f_out(request, log_id):
 
         # Retrieve the intern using the email
         intern = Intern.objects.get(email=email)
+
+        # Restrict access for interns who have not started yet
+        if localdate() < intern.start_date:
+            return JsonResponse({'message': 'You cannot time in/out before your official start date.'}, status=403)
+
+        # Restrict access for passed or dropped interns
+        if intern.status in ['passed', 'dropped']:
+            return JsonResponse({'message': 'You are not allowed to log attendance with your current status.'}, status=403)
 
         # Retrieve the attendance log
         attendance = Attendance.objects.get(id=log_id, intern=intern)

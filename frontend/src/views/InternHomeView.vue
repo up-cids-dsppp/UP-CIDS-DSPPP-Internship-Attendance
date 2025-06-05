@@ -54,6 +54,9 @@ onMounted(async () => {
       admin_remarks: data.admin_remarks,
     }
 
+    // Add this line:
+    timeInOutStore.internStartDate = data.start_date
+
     // Save the intern's status in the timeInOutStore
     timeInOutStore.setInternStatus(data.status)
 
@@ -144,6 +147,9 @@ const canTimeInOut = computed(() => {
   const hasSentAttendance = timeInOutStore.attendanceLogs.some(
     (log) => log.date === today && log.status !== 'ongoing'
   )
+  // Prevent time in/out if start date is in the future
+  if (!timeInOutStore.internStartDate) return false
+  if (today < timeInOutStore.internStartDate) return false
   return currentHour >= 8 && currentHour < 19 && !hasSentAttendance
 })
 
